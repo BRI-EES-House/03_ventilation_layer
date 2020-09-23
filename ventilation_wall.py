@@ -148,7 +148,7 @@ def calculate_layer_temperatures(parm):
             for j in range(5):
                 matrix_temp_prev[j][0] = (matrix_temp[j][0] + matrix_temp_prev[j][0]) / 2
 
-    return matrix_temp
+    return matrix_temp, h_rv, h_cv
 
 
 # 通気層を有する壁体の熱貫流率の計算（W/(m2・K)）
@@ -163,7 +163,7 @@ def overall_heat_transfer_coefficient(parm):
     theta_SAT = parm.theta_e + (parm.a_surf * parm.J_surf) / h_out
 
     # 各層の温度を計算
-    matrix_temp = calculate_layer_temperatures(parm)
+    matrix_temp, h_rv, h_cv = calculate_layer_temperatures(parm)
 
     # 通気層を有する壁体の熱貫流率(W/(m2・K))を計算
     u_e = h_in * (matrix_temp[3][0] - parm.theta_r) / (theta_SAT - parm.theta_r)
@@ -182,7 +182,7 @@ def solar_heat_gain_coefficient(parm):
     parm.theta_r = parm.theta_e
 
     # 各層の温度を計算
-    matrix_temp = calculate_layer_temperatures(parm)
+    matrix_temp, h_rv, h_cv = calculate_layer_temperatures(parm)
 
     # 通気層を有する壁体の日射熱取得率(-)を計算
     eta_e = h_in * (matrix_temp[3][0] - parm.theta_r) / parm.J_surf
