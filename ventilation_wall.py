@@ -134,11 +134,14 @@ def calculate_layer_temperatures(parm):
         # matrix_temp のすべての要素が近似的に近い値か判定する
         if np.allclose(matrix_temp, matrix_temp_prev):
             print("Done!")
+            print("θ_e:", parm.theta_e)
+            print("θ_sat:", theta_SAT)
             print("θ_out,surf:", matrix_temp[0][0])
             print("θ_1,surf:", matrix_temp[1][0])
             print("θ_2,surf:", matrix_temp[2][0])
             print("θ_in,surf:", matrix_temp[3][0])
             print("θ_as:", matrix_temp[4][0])
+            print("θ_r:", parm.theta_r)
             break
         else:
             # 収束しなかったときは各要素を平均値で置き換える
