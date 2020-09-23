@@ -62,7 +62,7 @@ def convective_heat_transfer_coefficient(v_a, theta_1, theta_2, angle, l_h, l_d)
         nusselt_number = max(nu_ct, nu_u1, nu_ut)
 
     # 傾斜角が0°<γ≤60°のとき
-    elif 0 < angle < 60:
+    elif 0 < angle < 60:  # 60度ジャストの場合が抜けている。どちらかに等号をつけるべき。
         buff = rayleigh_number * math.cos(angle)
         if buff >= 5830:
             nusselt_number = 1.44 * (1 - 1708/buff) * (1 - (1708 * (math.sin(1.8 * angle) ** 1.6))/buff) + (buff/5830) ** (1/3)
@@ -79,6 +79,9 @@ def convective_heat_transfer_coefficient(v_a, theta_1, theta_2, angle, l_h, l_d)
         nu_60 = max(nu_60_1, nu_60_2)
         nu_v = max(nu_ct, nu_u1, nu_ut)
         nusselt_number = nu_60 * (90 - angle)/30 + nu_v * (angle - 60)/30
+       
+    else:
+        raise Error  # ここに何らかのエラー（ValueError?）を記述した方がよい。
 
     # 密閉空気層の自然対流熱伝達率を計算
     h_base = nusselt_number * lambda_a / l_d
