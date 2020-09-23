@@ -62,7 +62,7 @@ def convective_heat_transfer_coefficient(v_a, theta_1, theta_2, angle, l_h, l_d)
         nusselt_number = max(nu_ct, nu_u1, nu_ut)
 
     # 傾斜角が0°<γ≤60°のとき
-    elif 0 < angle < 60:  # 60度ジャストの場合が抜けている。どちらかに等号をつけるべき。
+    elif 0 < angle <= 60:
         buff = rayleigh_number * math.cos(angle)
         if buff >= 5830:
             nusselt_number = 1.44 * (1 - 1708/buff) * (1 - (1708 * (math.sin(1.8 * angle) ** 1.6))/buff) + (buff/5830) ** (1/3)
