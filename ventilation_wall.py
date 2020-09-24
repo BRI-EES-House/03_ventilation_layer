@@ -89,7 +89,7 @@ def calculate_layer_temperatures(parm):
     matrix_const[0][0] = h_out * theta_SAT
     # Note: 仕様書に記載間違いあり（誤：theta_SAT　正：h_out * theta_SAT)
     matrix_const[3][0] = -h_in * parm.theta_r
-    matrix_const[4][0] = parm.theta_e
+    matrix_const[4][0] = parm.theta_e   # Note: この処理は不要
 
     # 収束計算の開始
     # Note: 100回で収束しないときどうするか？
@@ -111,8 +111,8 @@ def calculate_layer_temperatures(parm):
         # 通気風量の計算
         v_vent = parm.v_a * parm.l_d * parm.l_w
 
-        # 通気層の代表空気温度の計算
-        epsilon_c = math.exp(- (2 * h_cv * parm.l_w * parm.l_h) / (c_a * rho_a * v_vent))
+        # 通気層の平均空気温度の計算用の値を設定
+        beta = (2 * h_cv * parm.l_w) / (c_a * rho_a * v_vent)
 
         # 行列に値を設定
         matrix_coeff[1][1] = -(h_cv + h_rv + parm.C_1)
@@ -121,9 +121,10 @@ def calculate_layer_temperatures(parm):
         matrix_coeff[2][1] = h_rv
         matrix_coeff[2][2] = -(h_cv + h_rv + parm.C_2)
         matrix_coeff[2][4] = h_cv
-        matrix_coeff[4][1] = -(1 - epsilon_c) / (2 * epsilon_c)
-        matrix_coeff[4][2] = -(1 - epsilon_c) / (2 * epsilon_c)
-        matrix_coeff[4][4] = 1 / epsilon_c
+        matrix_coeff[4][1] = (beta * parm.l_h + math.exp(-beta * parm.l_h) - 1) / 2
+        matrix_coeff[4][2] = (beta * parm.l_h + math.exp(-beta * parm.l_h) - 1) / 2
+        matrix_coeff[4][4] = -beta * parm.l_h
+        matrix_const[4][0] = (math.exp(-beta * parm.l_h) - 1) * parm.theta_e
 
         # matrix_coeffの逆行列を計算
         inv_matrix_coeff = np.linalg.inv(matrix_coeff)
