@@ -81,7 +81,7 @@ def convective_heat_transfer_coefficient(v_a, theta_1, theta_2, angle, l_h, l_d)
         nusselt_number = nu_60 * (90 - angle)/30 + nu_v * (angle - 60)/30
        
     else:
-        raise Error  # ここに何らかのエラー（ValueError?）を記述した方がよい。
+        raise ValueError("指定された傾斜角は計算対象外です")
 
     # 密閉空気層の自然対流熱伝達率を計算
     h_base = nusselt_number * lambda_a / l_d
