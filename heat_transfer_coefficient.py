@@ -27,15 +27,12 @@ def convective_heat_transfer_coefficient(v_a, theta_1, theta_2, angle, l_h, l_d)
     # 固定値を設定
     g = 9.8                     # 重力加速度,m/s^2
     beta_a = 3.7 * (10 ** -3)    # 空気の体膨張率, 1/K
-    # Note: 仕様書に記載間違いあり？（誤：3.7 * (10 ** 3) 　正：3.7 * (10 ** -3))
     lambda_a = 0.026            # 空気の熱伝導率, W/(m・K)
     c_a = 1006                 # 空気の定圧比熱, J/(kg・K)
-    # Note: 仕様書に記載間違いあり？（誤：1.006　正：1006)
     rho_a = 1.2                 # 空気の密度, kg/m3
     mu_a = 1.8 * (10 ** -5)     # 空気の粘性率, Pa・s
 
     # レーリー数の計算
-    # Note:　レーリー数が0の時の処理をどうするか（ヌセルト数の計算でゼロ割が発生する）
     rayleigh_number = (g * beta_a * abs((theta_1 + 273.15) - (theta_2 + 273.15)) * (l_d ** 3) * (rho_a ** 2) * c_a) / (mu_a * lambda_a)
 
     # ヌセルト数の計算
@@ -45,7 +42,6 @@ def convective_heat_transfer_coefficient(v_a, theta_1, theta_2, angle, l_h, l_d)
     nu_ut = 0.0605 * rayleigh_number ** (1 / 3)
 
     # 傾斜角が0°（水平）のとき
-    # Note:例外処理が必要
     if angle == 0:
         if rayleigh_number > 5830:
             nusselt_number = 1.44 * (1 - 1708/rayleigh_number) + (rayleigh_number/5830) ** (1/3)
