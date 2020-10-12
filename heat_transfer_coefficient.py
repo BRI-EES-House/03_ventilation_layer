@@ -8,7 +8,7 @@ def effective_emissivity_parallel(emissivity_1, emissivity_2):
 
 
 # 有効放射率の計算（二次元空間の場合）
-def effective_emissivity_two_dimention(emissivity_1, emissivity_2, l_d, l_s):
+def effective_emissivity_two_dimension(emissivity_1, emissivity_2, l_d, l_s):
     effective_emissivity = 1 / (1 / emissivity_1 - 1 / emissivity_2 - 2 + 1 / (1 / 2 * (1 + math.sqrt(l_d ^ 2 / l_s ^ 2) - l_d / l_s)))
     return effective_emissivity
 
