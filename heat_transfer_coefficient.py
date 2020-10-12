@@ -25,6 +25,28 @@ def radiative_heat_transfer_coefficient(theta_1, theta_2, effective_emissivity):
 def convective_heat_transfer_coefficient(v_a, theta_1, theta_2, angle, l_h, l_d):
 
     # 固定値を設定
+    lambda_a = 0.026  # 空気の熱伝導率, W/(m・K)
+
+    if theta_1 == theta_2:
+        # 両表面の温度（theta_1とtheta_2）が同じ値のときはh_c = 1とする
+        h_c = 1
+    else:
+        # ヌセルト数を計算
+        nusselt_number = get_nusselt_number(theta_1, theta_2, angle, l_h, l_d)
+
+        # 密閉空気層の自然対流熱伝達率を計算
+        h_base = nusselt_number * lambda_a / l_d
+
+        # 通気層の対流熱伝達率の計算
+        h_c = 2 * h_base * 4 * v_a
+
+    return h_c
+
+
+# ヌセルト数の計算
+def get_nusselt_number(theta_1, theta_2, angle, l_h, l_d):
+
+    # 固定値を設定
     g = 9.8                     # 重力加速度,m/s^2
     beta_a = 3.7 * (10 ** -3)    # 空気の体膨張率, 1/K
     lambda_a = 0.026            # 空気の熱伝導率, W/(m・K)
@@ -79,10 +101,4 @@ def convective_heat_transfer_coefficient(v_a, theta_1, theta_2, angle, l_h, l_d)
     else:
         raise ValueError("指定された傾斜角は計算対象外です")
 
-    # 密閉空気層の自然対流熱伝達率を計算
-    h_base = nusselt_number * lambda_a / l_d
-
-    # 通気層の対流熱伝達率の計算
-    h_c = 2 * h_base * 4 * v_a
-
-    return h_c
+    return nusselt_number
