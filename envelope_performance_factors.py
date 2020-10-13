@@ -1,7 +1,8 @@
 import ventilation_wall
 
+
 # 通気層を有する壁体の熱貫流率の計算（W/(m2・K)）
-def overall_heat_transfer_coefficient(parm):
+def overall_heat_transfer_coefficient(parm: ventilation_wall.Parameters, theta_as_ave: float, h_cv: float, h_rv: float):
 
     # 固定値を設定
     # Note:固定値はグローバル変数にするのがよいか
@@ -13,8 +14,6 @@ def overall_heat_transfer_coefficient(parm):
     # 相当外気温度を計算
     theta_SAT = parm.theta_e + (parm.a_surf * parm.J_surf) / h_out
 
-    # 各層の温度を計算
-    matrix_temp, h_rv, h_cv = ventilation_wall.calculate_layer_temperatures(parm)
 
     # 省エネ基準でのU値を計算
     u_s = 1/(r_s_e + 1/parm.C_2 + r_s_r)
@@ -32,18 +31,13 @@ def overall_heat_transfer_coefficient(parm):
 
 
 # 通気層を有する壁体の日射熱取得率(-)の計算
-# Note: この関数は不要
-def solar_heat_gain_coefficient(parm):
+def solar_heat_gain_coefficient(parm: ventilation_wall.Parameters, theta_as_ave: float, h_cv: float, h_rv: float):
 
     # 固定値を設定
     # Note:固定値はグローバル変数にするのがよいか
     h_in = 9.0  # 室内側総合熱伝達率, W/(m2・K)
 
-    # 内外温度差を0とする（室内温度 = 外気温度とする）
-    parm.theta_r = parm.theta_e
 
-    # 各層の温度を計算
-    matrix_temp, h_rv, h_cv = ventilation_wall.calculate_layer_temperatures(parm)
 
     # 通気層を有する壁体の日射熱取得率(-)を計算
     eta_e = h_in * (matrix_temp[3][0] - parm.theta_r) / parm.J_surf
