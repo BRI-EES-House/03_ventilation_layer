@@ -51,6 +51,19 @@ class Parameters:
     emissivity_2: float
 
 
+@dataclass
+class WallStatusValues:
+
+    # 通気層内の各点の温度, degree C
+    matrix_temp: np.zeros(shape=(5, 1))
+
+    # 対流熱伝達率, W/(m2・K)
+    h_cv: float
+
+    # 放射熱伝達率, W/(m2・K)
+    h_rv: float
+
+
 # 通気層内の各層の温度の計算
 def calculate_layer_temperatures(parm):
 
