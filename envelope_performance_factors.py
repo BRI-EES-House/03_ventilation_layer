@@ -12,22 +12,15 @@ def overall_heat_transfer_coefficient(parm: ventilation_wall.Parameters, theta_a
     # Note: 省エネ基準の規定による表面熱伝達抵抗は、屋根、外壁で値が異なる。どのように判定するかが課題。
 
     # 相当外気温度を計算
-    theta_SAT = parm.theta_e + (parm.a_surf * parm.J_surf) / h_out
-
-
-    # 省エネ基準でのU値を計算
-    u_s = 1/(r_s_e + 1/parm.C_2 + r_s_r)
+    theta_SAT = get_theta_SAT(parm.theta_e, parm.a_surf, parm.J_surf, h_out)
 
     # 温度、風速依存の熱伝達率を使用したU値に修正
-    u_s_dash = 1/(1/u_s - r_s_e + 1/(h_rv + h_cv))
+    u_s_dash = get_u_s_dash(r_s_e, r_s_r, parm.C_2, h_cv, h_rv)
 
     # 通気層を有する壁体の熱貫流率(W/(m2・K))を計算
-    u_e = u_s_dash * (matrix_temp[4][0] - parm.theta_r) / (theta_SAT - parm.theta_r)
+    u_e = u_s_dash * (theta_as_ave - parm.theta_r) / (theta_SAT - parm.theta_r)
 
-    # 通気層を有する壁体の日射熱取得率(-)を計算
-    eta_e = u_s_dash * parm.a_surf/h_out * (matrix_temp[4][0] - parm.theta_r) / (theta_SAT - parm.theta_r)
-
-    return u_e, eta_e
+    return u_e
 
 
 # 通気層を有する壁体の日射熱取得率(-)の計算
