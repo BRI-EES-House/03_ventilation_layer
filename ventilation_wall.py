@@ -1,4 +1,5 @@
 import math
+from scipy import optimize
 import numpy as np
 import heat_transfer_coefficient
 from dataclasses import dataclass
@@ -227,10 +228,19 @@ def calculate_layer_temperatures(parm):
     return matrix_temp, h_rv, h_cv
 
 
-
-
 # デバッグ用
-# parm_1 = Parameters(20, 25, 500, 0.9, 10, 0.5, 6.0, 0.45, 0.018, 90, 0.2, 0.45, 0.9, 0.9)
+parm_1 = Parameters(20, 25, 500, 0.9, 10, 0.5, 6.0, 0.45, 0.018, 90, 0.2, 0.45, 0.9, 0.9)
+# 通気層内の各点の温度の初期値を設定
+matrix_temp = np.zeros(shape=(5, 1))
+matrix_temp[0][0] = parm_1.theta_e
+matrix_temp[1][0] = parm_1.theta_e + (parm_1.theta_r - parm_1.theta_e) / (4 * 3)
+matrix_temp[2][0] = parm_1.theta_e + (parm_1.theta_r - parm_1.theta_e) / (4 * 2)
+matrix_temp[3][0] = parm_1.theta_e + (parm_1.theta_r - parm_1.theta_e) / (4 * 1)
+matrix_temp[4][0] = (matrix_temp[1][0] + matrix_temp[2][0]) / 2
+
+answer_T = optimize.root(fun=get_heat_balance, x0=matrix_temp, args=parm_1, method='lm')
+print(answer_T)
+
 # u_e, eta_e = overall_heat_transfer_coefficient(parm_1)
 # print("通気層を有する壁体の熱貫流率U_e:", u_e)
 # print("通気層を有する壁体の日射熱取得率η_e):", eta_e)
