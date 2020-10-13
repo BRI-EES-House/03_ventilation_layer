@@ -44,3 +44,14 @@ def solar_heat_gain_coefficient(parm: ventilation_wall.Parameters, theta_as_ave:
 
     return eta_e
 
+
+# 相当外気温度を計算
+def get_theta_SAT(theta_e: float, a_surf: float, J_surf: float, h_out: float):
+    return theta_e + (a_surf * J_surf) / h_out
+
+
+# 温度、風速依存の熱伝達率を使用したU値を計算
+def get_u_s_dash(r_s_e: float, r_s_r: float, C_2: float, h_cv: float, h_rv: float):
+    # 省エネ基準でのU値を計算
+    u_s = 1 / (r_s_e + 1 / C_2 + r_s_r)
+    return 1/(1/u_s - r_s_e + 1/(h_rv + h_cv))
