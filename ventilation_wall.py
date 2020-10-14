@@ -127,19 +127,33 @@ def get_heat_balance(matrix_temp: np.zeros(shape=(5, 1)), parm: Parameters) -> n
     return q_balance
 
 
+# 通気層の状態値を取得する
+def get_wall_status_values(parm: Parameters) -> WallStatusValues:
+
+    # 通気層内の各点の温度の初期値を設定
+    matrix_temp = np.zeros(shape=(5, 1))
+    matrix_temp[0][0] = parm.theta_e
+    matrix_temp[1][0] = parm.theta_e + (parm.theta_r - parm.theta_e) / (4 * 3)
+    matrix_temp[2][0] = parm.theta_e + (parm.theta_r - parm.theta_e) / (4 * 2)
+    matrix_temp[3][0] = parm.theta_e + (parm.theta_r - parm.theta_e) / (4 * 1)
+    matrix_temp[4][0] = (matrix_temp[1][0] + matrix_temp[2][0]) / 2
+
+    # 通気層内の各点の熱収支式が成り立つときの各点の温度を取得
+    answer_T = optimize.root(fun=get_heat_balance, x0=matrix_temp, args=parm, method='broyden1')
+    matrix_temp_fixed = answer_T.x
+
+    # 対流熱伝達率の計算
+    h_cv = heat_transfer_coefficient.convective_heat_transfer_coefficient(parm.v_a, matrix_temp_fixed[1][0], matrix_temp_fixed[2][0], parm.angle,
+                                                                          parm.l_h, parm.l_d)
+
+    # 有効放射率の計算
+    effective_emissivity = heat_transfer_coefficient.effective_emissivity_parallel(parm.emissivity_1, parm.emissivity_2)
+
+    # 放射熱伝達率の計算
+    h_rv = heat_transfer_coefficient.radiative_heat_transfer_coefficient(matrix_temp_fixed[1][0], matrix_temp_fixed[2][0], effective_emissivity)
+
+    return WallStatusValues(matrix_temp = matrix_temp_fixed, h_cv = h_cv, h_rv = h_rv)
+
+
 # デバッグ用
-parm_1 = Parameters(20, 25, 500, 0.9, 10, 0.5, 6.0, 0.45, 0.018, 90, 0.2, 0.45, 0.9, 0.9)
-# 通気層内の各点の温度の初期値を設定
-matrix_temp = np.zeros(shape=(5, 1))
-matrix_temp[0][0] = parm_1.theta_e
-matrix_temp[1][0] = parm_1.theta_e + (parm_1.theta_r - parm_1.theta_e) / (4 * 3)
-matrix_temp[2][0] = parm_1.theta_e + (parm_1.theta_r - parm_1.theta_e) / (4 * 2)
-matrix_temp[3][0] = parm_1.theta_e + (parm_1.theta_r - parm_1.theta_e) / (4 * 1)
-matrix_temp[4][0] = (matrix_temp[1][0] + matrix_temp[2][0]) / 2
-
-answer_T = optimize.root(fun=get_heat_balance, x0=matrix_temp, args=parm_1, method='lm')
-print(answer_T)
-
-# u_e, eta_e = overall_heat_transfer_coefficient(parm_1)
-# print("通気層を有する壁体の熱貫流率U_e:", u_e)
-# print("通気層を有する壁体の日射熱取得率η_e):", eta_e)
+# parm_1: Parameters = Parameters(20, 25, 500, 0.9, 10, 0.5, 6.0, 0.45, 0.018, 90, 0.2, 0.45, 0.9, 0.9)
