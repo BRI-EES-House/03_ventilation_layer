@@ -216,7 +216,20 @@ def get_heat_flow_exhaust(matrix_temp: np.ndarray, param: Parameters, theta_as_i
         return 0.0
 
 
-def get_heat_flow_2(matrix_temp: np.ndarray, param: Parameters, h_cv: float, h_rv: float) -> float:
+def get_heat_flow_convect_vent_layer(matrix_temp: np.ndarray, param: Parameters, h_cv: float) -> float:
+
+    '''
+    通気層内表面から通気層空気への対流熱量
+    :param matrix_temp: 各部温度計算結果 (5,1), C
+    :param param: 計算条件パラメータ群
+    :param h_cv: 通気層対流熱伝達率, W/m2K
+    :return: 通気層内表面から通気層空気への対流熱量、W/m2
+    '''
+
+    return 2.0 * h_cv * ((matrix_temp[1][0] + matrix_temp[2][0]) / 2.0 - matrix_temp[4][0])
+
+
+def get_heat_flow_2(matrix_temp: np.ndarray, param: Parameters, h_cv: float, h_rv: float) -> tuple:
 
     '''
     通気層熱伝達量の計算
@@ -227,11 +240,8 @@ def get_heat_flow_2(matrix_temp: np.ndarray, param: Parameters, h_cv: float, h_r
     :return: 通気層熱伝達量, W/m2
     '''
 
-    # 通気層熱抵抗
-    R_as = 1.0 / (h_cv + h_rv) + 1.0 / (h_cv + h_rv)
-
     # 熱伝達量
-    return 1.0 / R_as * (matrix_temp[1][0] - matrix_temp[2][0])
+    return (h_cv * (matrix_temp[1][0] - matrix_temp[2][0]), h_rv * (matrix_temp[1][0] - matrix_temp[2][0]))
 
 
 def get_heat_flow_3(matrix_temp: np.ndarray, param: Parameters) -> float:
