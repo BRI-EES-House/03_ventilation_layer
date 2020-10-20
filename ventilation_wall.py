@@ -100,7 +100,7 @@ def get_heat_balance(matrix_temp: np.zeros(shape=(5, 1)), parm: Parameters) -> n
 
     # 通気層の平均空気温度の計算用の値を設定
     beta = 0.0
-    if v_vent > 0.0:
+    if parm.v_a > 0.0:
         beta = (2 * h_cv * parm.l_w) / (c_a * rho_a * v_vent)
 
     # 行列に値を設定
@@ -116,12 +116,18 @@ def get_heat_balance(matrix_temp: np.zeros(shape=(5, 1)), parm: Parameters) -> n
     matrix_coeff[2][4] = h_cv
     matrix_coeff[3][2] = parm.C_2
     matrix_coeff[3][3] = -(h_in + parm.C_2)
-    matrix_coeff[4][1] = (beta * parm.l_h + math.exp(-beta * parm.l_h) - 1) / 2
-    matrix_coeff[4][2] = (beta * parm.l_h + math.exp(-beta * parm.l_h) - 1) / 2
-    matrix_coeff[4][4] = -beta * parm.l_h
+    matrix_coeff[4][4] = -1.0
     matrix_const[0][0] = h_out * theta_SAT
     matrix_const[3][0] = -h_in * parm.theta_r
-    matrix_const[4][0] = (math.exp(-beta * parm.l_h) - 1) * parm.theta_e
+
+    if parm.v_a > 0.0:
+        matrix_coeff[4][1] = (1.0 + 1.0 / parm.l_h * 1.0 / beta * (math.exp(-beta * parm.l_h) - 1)) / 2
+        matrix_coeff[4][2] = (1.0 + 1.0 / parm.l_h * 1.0 / beta * (math.exp(-beta * parm.l_h) - 1)) / 2
+        matrix_const[4][0] = 1.0 / parm.l_h * 1.0 / beta * (math.exp(-beta * parm.l_h) - 1) * parm.theta_e
+    else:
+        matrix_coeff[4][1] = 0.5
+        matrix_coeff[4][2] = 0.5
+        matrix_const[4][0] = 0.0
 
     # 熱収支を計算
     q_balance = np.matmul(matrix_coeff, matrix_temp) - matrix_const
