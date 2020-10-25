@@ -9,12 +9,19 @@ def validation():
     '''
 
     # パラメータの設定
-    parms = vw.Parameters(theta_e=0.0,
-                          theta_r=20.0,
-                          J_surf=500.0,
-                          a_surf=0.8,
-                          C_1=5.0,
-                          C_2=0.5,
+    theta_e = 0.0
+    theta_r = 20.0
+    J_surf = 500.0
+    a_surf = 0.8
+    C_1 = 5.0
+    C_2 = 0.5
+
+    parms = vw.Parameters(theta_e=theta_e,
+                          theta_r=theta_r,
+                          J_surf=J_surf,
+                          a_surf=a_surf,
+                          C_1=C_1,
+                          C_2=C_2,
                           l_h=3.5,
                           l_w=0.455,
                           l_d=0.05,
@@ -57,7 +64,34 @@ def validation():
 
     # 室内表面熱流の計算
     print('室内表面熱流')
-    print(vw.get_heat_flow_4(matrix_temp=status.matrix_temp, param=parms))
+    q = vw.get_heat_flow_4(matrix_temp=status.matrix_temp, param=parms)
+    print(q)
+
+    # 通気層を考慮した熱貫流率
+    h_o = 25.0
+    theta_sat = theta_e + a_surf * J_surf / h_o
+    Ue = q / (theta_sat - theta_r)
+    print('Ue= ', Ue)
+
+    # 通気層から室内までの熱貫流率
+    h_i = 9.0
+    h_as_s = 9.1                    # 通気層を有する壁体の省エネ基準における屋外側熱伝達率
+    Us = 1.0 / (1.0 / h_as_s + 1.0 / C_2 + 1.0 / h_i)
+                                    # 通気層から室内までの熱貫流率（屋外側熱伝達率は省エネ基準の値）
+    Usd = 1.0 / (1.0 / (status.h_cv + status.h_rv) + 1.0 / C_2 + 1.0 / h_i)
+                                    # 通気層から室内までの熱貫流率（屋外側熱伝達率はここで計算した値）
+    print('Us= ', Us, 'Usd= ', Usd)
+
+    # Usdを用いて計算した室内側熱流
+    theta_as_e = (status.matrix_temp[4][0] * status.h_cv + status.matrix_temp[1][0] * status.h_rv) \
+                / (status.h_cv + status.h_rv)
+    q_usd = Usd * (theta_as_e - theta_r)
+    print('q_usd= ', q_usd)
+    Ue_calc = Usd * (theta_as_e - theta_r) / (theta_sat - theta_r)
+    print('UsからUeを計算', Ue_calc)
+    eta_e = Ue_calc * a_surf / h_o
+    print('eta_e= ', eta_e)
+    print('Usから熱流を計算', Ue * (theta_e - theta_r) + eta_e * J_surf)
 
 
 if __name__ == '__main__':
