@@ -37,6 +37,8 @@ def validation():
     # 温度状態値の出力
     print('各部温度')
     print(status.matrix_temp)
+    print('h_cv= ', status.h_cv)
+    print('h_rv= ', status.h_rv)
 
     # 熱流の出力
     print('屋外表面熱流')
