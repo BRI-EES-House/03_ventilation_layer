@@ -87,7 +87,7 @@ def get_heat_balance(matrix_temp: np.zeros(shape=(5, 1)), parm: Parameters) -> n
     theta_2 = matrix_temp[2][0]
 
     # 対流熱伝達率の計算
-    h_cv = heat_transfer_coefficient.convective_heat_transfer_coefficient(parm.v_a, theta_1, theta_2, parm.angle, parm.l_h, parm.l_d)
+    h_cv = heat_transfer_coefficient.convective_heat_transfer_coefficient(parm.v_a, theta_1, theta_2, parm.angle, parm.l_h, parm.l_d, c_a, rho_a)
 
     # 有効放射率の計算
     effective_emissivity = heat_transfer_coefficient.effective_emissivity_parallel(parm.emissivity_1, parm.emissivity_2)
@@ -152,7 +152,7 @@ def get_wall_status_values(parm: Parameters) -> WallStatusValues:
 
     # 対流熱伝達率の計算
     h_cv = heat_transfer_coefficient.convective_heat_transfer_coefficient(parm.v_a, matrix_temp_fixed[1][0], matrix_temp_fixed[2][0], parm.angle,
-                                                                          parm.l_h, parm.l_d)
+                                                                          parm.l_h, parm.l_d, c_a, rho_a)
 
     # 有効放射率の計算
     effective_emissivity = heat_transfer_coefficient.effective_emissivity_parallel(parm.emissivity_1, parm.emissivity_2)
