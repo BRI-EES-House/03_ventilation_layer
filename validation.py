@@ -1,12 +1,18 @@
+import global_number
 import ventilation_wall as vw
 import envelope_performance_factors as ep
-
 
 def validation():
     '''
     通気層を有する壁体の熱貫流率の検証
     :return:
     '''
+
+    # 固定値の設定
+    c_a = global_number.get_c_air()
+    rho_a = global_number.get_rho_air()
+    h_out = global_number.get_h_out()
+    h_in = global_number.get_h_in()
 
     # パラメータの設定
     theta_e = 0.0
@@ -32,7 +38,7 @@ def validation():
                           emissivity_2=0.9)
 
     # 通気層の状態値を取得
-    status = vw.get_wall_status_values(parms)
+    status = vw.get_wall_status_values(parms, c_a, rho_a, h_out, h_in)
 
     # 温度状態値の出力
     print('各部温度')
@@ -42,7 +48,7 @@ def validation():
 
     # 熱流の出力
     print('屋外表面熱流')
-    print(vw.get_heat_flow_0(matrix_temp=status.matrix_temp, param=parms))
+    print(vw.get_heat_flow_0(matrix_temp=status.matrix_temp, param=parms, h_out=h_out))
 
     # 外装材伝導熱流の出力
     print('外装材伝導熱流')
@@ -54,7 +60,7 @@ def validation():
 
     # 通気層排気熱量
     print('通気層からの排気熱量')
-    print(vw.get_heat_flow_exhaust(matrix_temp=status.matrix_temp, param=parms, theta_as_in=parms.theta_e, h_cv=status.h_cv))
+    print(vw.get_heat_flow_exhaust(matrix_temp=status.matrix_temp, param=parms, theta_as_in=parms.theta_e, h_cv=status.h_cv, c_a=c_a, rho_a=rho_a))
 
     # 通気層内表面から通気層空気への熱流
     print('通気層内表面から通気層空気への熱流')
@@ -66,7 +72,7 @@ def validation():
 
     # 室内表面熱流の計算
     print('室内表面熱流')
-    q = vw.get_heat_flow_4(matrix_temp=status.matrix_temp, param=parms)
+    q = vw.get_heat_flow_4(matrix_temp=status.matrix_temp, param=parms, h_in=h_in)
     print(q)
 
     # 通気層を考慮した熱貫流率
