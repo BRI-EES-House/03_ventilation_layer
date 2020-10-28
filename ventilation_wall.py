@@ -66,14 +66,7 @@ class WallStatusValues:
 
 
 # 熱収支式を解く関数
-def get_heat_balance(matrix_temp: np.zeros(shape=(5, 1)), parm: Parameters) -> np.zeros(shape=(5, 1)):
-
-    # 固定値を設定
-    # Note: パラメータごとにこれらの値を計算する方法もあるが、ひとまず固定値とする
-    h_out = 25.0  # 室外側総合熱伝達率, W/(m2・K)
-    h_in = 9.0  # 室内側総合熱伝達率, W/(m2・K)
-    c_a = 1006  # 空気の定圧比熱, J/(kg・K)
-    rho_a = 1.2  # 空気の密度, kg/m3
+def get_heat_balance(matrix_temp: np.zeros(shape=(5, 1)), parm: Parameters, c_a: float, rho_a: float, h_out: float, h_in: float) -> np.zeros(shape=(5, 1)):
 
     # 相当外気温度を計算
     theta_SAT = parm.theta_e + (parm.a_surf * parm.J_surf) / h_out
@@ -136,7 +129,7 @@ def get_heat_balance(matrix_temp: np.zeros(shape=(5, 1)), parm: Parameters) -> n
 
 
 # 通気層の状態値を取得する
-def get_wall_status_values(parm: Parameters) -> WallStatusValues:
+def get_wall_status_values(parm: Parameters, c_a: float, rho_a: float, h_out: float, h_in: float) -> WallStatusValues:
 
     # 通気層内の各点の温度の初期値を設定
     matrix_temp = np.zeros(shape=(5, 1))
@@ -147,7 +140,7 @@ def get_wall_status_values(parm: Parameters) -> WallStatusValues:
     matrix_temp[4][0] = (matrix_temp[1][0] + matrix_temp[2][0]) / 2
 
     # 通気層内の各点の熱収支式が成り立つときの各点の温度を取得
-    answer_T = optimize.root(fun=get_heat_balance, x0=matrix_temp, args=parm, method='broyden1')
+    answer_T = optimize.root(fun=get_heat_balance, x0=matrix_temp, args=(parm, c_a, rho_a, h_out, h_in), method='broyden1')
     matrix_temp_fixed = answer_T.x
 
     # 対流熱伝達率の計算
