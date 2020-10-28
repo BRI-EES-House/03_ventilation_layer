@@ -25,8 +25,8 @@ def radiative_heat_transfer_coefficient(theta_1, theta_2, effective_emissivity):
 def convective_heat_transfer_coefficient(v_a, theta_1, theta_2, angle, l_h, l_d, c_a, rho_a):
 
     if theta_1 == theta_2:
-        # 両表面の温度（theta_1とtheta_2）が同じ値のときはh_c = 1とする
-        h_c = 1
+        # 両表面の温度（theta_1とtheta_2）が同じ値のときはh_c = 0.0とする
+        h_c = 0.0
     else:
         # ヌセルト数を計算
         nusselt_number = get_nusselt_number(theta_1, theta_2, angle, l_h, l_d, c_a, rho_a)
@@ -35,7 +35,10 @@ def convective_heat_transfer_coefficient(v_a, theta_1, theta_2, angle, l_h, l_d,
         h_base = nusselt_number * get_lambda_air() / l_d
 
         # 通気層の対流熱伝達率の計算
-        h_c = 2 * h_base * 4 * v_a
+        if v_a > 0.0:
+            h_c = 2 * h_base * 4 * v_a
+        else:
+            h_c = h_base
 
     return h_c
 
@@ -70,11 +73,11 @@ def get_nusselt_number(theta_1, theta_2, angle, l_h, l_d, c_a, rho_a):
 
     # 傾斜角が0°<γ≤60°のとき
     elif 0 < angle <= 60:
-        buff = rayleigh_number * math.cos(angle)
+        buff = rayleigh_number * math.cos(math.radians(angle))
         if buff >= 5830:
-            nusselt_number = 1.44 * (1 - 1708/buff) * (1 - (1708 * (math.sin(1.8 * angle) ** 1.6))/buff) + (buff/5830) ** (1/3)
+            nusselt_number = 1.44 * (1 - 1708/buff) * (1 - (1708 * (math.sin(1.8 * math.radians(angle)) ** 1.6))/buff) + (buff/5830) ** (1/3)
         elif 1708 <= buff < 5830:
-            nusselt_number = 1.44 * (1 - 1708 / buff) * (1 - (1708 * (math.sin(1.8 * angle) ** 1.6)) / buff)
+            nusselt_number = 1.44 * (1 - 1708 / buff) * (1 - (1708 * (math.sin(1.8 * math.radians(angle)) ** 1.6)) / buff)
         elif buff < 1708:
             nusselt_number = 1.0
 
