@@ -66,14 +66,7 @@ class WallStatusValues:
 
 
 # 熱収支式を解く関数
-def get_heat_balance(matrix_temp: np.zeros(shape=(5, 1)), parm: Parameters) -> np.zeros(shape=(5, 1)):
-
-    # 固定値を設定
-    # Note: パラメータごとにこれらの値を計算する方法もあるが、ひとまず固定値とする
-    h_out = 25.0  # 室外側総合熱伝達率, W/(m2・K)
-    h_in = 9.0  # 室内側総合熱伝達率, W/(m2・K)
-    c_a = 1006  # 空気の定圧比熱, J/(kg・K)
-    rho_a = 1.2  # 空気の密度, kg/m3
+def get_heat_balance(matrix_temp: np.zeros(shape=(5, 1)), parm: Parameters, c_a: float, rho_a: float, h_out: float, h_in: float) -> np.zeros(shape=(5, 1)):
 
     # 相当外気温度を計算
     theta_SAT = parm.theta_e + (parm.a_surf * parm.J_surf) / h_out
@@ -87,7 +80,7 @@ def get_heat_balance(matrix_temp: np.zeros(shape=(5, 1)), parm: Parameters) -> n
     theta_2 = matrix_temp[2][0]
 
     # 対流熱伝達率の計算
-    h_cv = heat_transfer_coefficient.convective_heat_transfer_coefficient(parm.v_a, theta_1, theta_2, parm.angle, parm.l_h, parm.l_d)
+    h_cv = heat_transfer_coefficient.convective_heat_transfer_coefficient(parm.v_a, theta_1, theta_2, parm.angle, parm.l_h, parm.l_d, c_a, rho_a)
 
     # 有効放射率の計算
     effective_emissivity = heat_transfer_coefficient.effective_emissivity_parallel(parm.emissivity_1, parm.emissivity_2)
@@ -136,7 +129,7 @@ def get_heat_balance(matrix_temp: np.zeros(shape=(5, 1)), parm: Parameters) -> n
 
 
 # 通気層の状態値を取得する
-def get_wall_status_values(parm: Parameters) -> WallStatusValues:
+def get_wall_status_values(parm: Parameters, c_a: float, rho_a: float, h_out: float, h_in: float) -> WallStatusValues:
 
     # 通気層内の各点の温度の初期値を設定
     matrix_temp = np.zeros(shape=(5, 1))
@@ -147,12 +140,12 @@ def get_wall_status_values(parm: Parameters) -> WallStatusValues:
     matrix_temp[4][0] = (matrix_temp[1][0] + matrix_temp[2][0]) / 2
 
     # 通気層内の各点の熱収支式が成り立つときの各点の温度を取得
-    answer_T = optimize.root(fun=get_heat_balance, x0=matrix_temp, args=parm, method='broyden1')
+    answer_T = optimize.root(fun=get_heat_balance, x0=matrix_temp, args=(parm, c_a, rho_a, h_out, h_in), method='broyden1')
     matrix_temp_fixed = answer_T.x
 
     # 対流熱伝達率の計算
     h_cv = heat_transfer_coefficient.convective_heat_transfer_coefficient(parm.v_a, matrix_temp_fixed[1][0], matrix_temp_fixed[2][0], parm.angle,
-                                                                          parm.l_h, parm.l_d)
+                                                                          parm.l_h, parm.l_d, c_a, rho_a)
 
     # 有効放射率の計算
     effective_emissivity = heat_transfer_coefficient.effective_emissivity_parallel(parm.emissivity_1, parm.emissivity_2)
@@ -162,17 +155,17 @@ def get_wall_status_values(parm: Parameters) -> WallStatusValues:
 
     return WallStatusValues(matrix_temp = matrix_temp_fixed, h_cv = h_cv, h_rv = h_rv)
 
-def get_heat_flow_0(matrix_temp: np.ndarray, param: Parameters) -> float:
+
+def get_heat_flow_0(matrix_temp: np.ndarray, param: Parameters, h_out: float) -> float:
 
     '''
     各部温度から屋外側表面熱流を計算する
     :param matrix_temp: 各部温度計算結果 (5,1), C
     :param param: 計算条件パラメータ群
+    :param h_out: 室外側総合熱伝達率, W/(m2・K)
     :return:屋外側表面熱流, W/m2
     '''
 
-    # Note: パラメータごとにこれらの値を計算する方法もあるが、ひとまず固定値とする
-    h_out = 25.0  # 室外側総合熱伝達率, W/(m2・K)
     # 相当外気温度を計算
     theta_sat = param.theta_e + (param.a_surf * param.J_surf) / h_out
 
@@ -191,22 +184,21 @@ def get_heat_flow_1(matrix_temp: np.ndarray, param: Parameters) -> float:
     return param.C_1 * (matrix_temp[0][0] - matrix_temp[1][0])
 
 
-def get_heat_flow_exhaust(matrix_temp: np.ndarray, param: Parameters, theta_as_in: float, h_cv: float) -> float:
+def get_heat_flow_exhaust(matrix_temp: np.ndarray, param: Parameters, theta_as_in: float, h_cv: float, c_a: float, rho_a: float) -> float:
 
     '''
     通気層からの排気熱量の計算
     :param matrix_temp: 各部温度計算結果 (5,1), C
     :param param: 計算条件パラメータ群
-    :theta_as_in: 通気層への流入温度=外気温度, C
-    :h_cv: 通気層の対流熱伝達率, W/m2K
+    :param theta_as_in: 通気層への流入温度=外気温度, C
+    :param h_cv: 通気層の対流熱伝達率, W/m2K
+    :param c_a: 空気の定圧比熱, J/(kg・K)
+    :param rho_a: 空気の密度, kg/m3
     :return: 通気層の排気熱量, W/m2
     '''
 
     if param.v_a > 0.0:
-        # 固定値を設定
-        # Note: パラメータごとにこれらの値を計算する方法もあるが、ひとまず固定値とする
-        c_a = 1006  # 空気の定圧比熱, J/(kg・K)
-        rho_a = 1.2  # 空気の密度, kg/m3
+
         # 通気風量の計算
         v_vent = param.v_a * param.l_d * param.l_w
 
@@ -262,18 +254,15 @@ def get_heat_flow_3(matrix_temp: np.ndarray, param: Parameters) -> float:
     return param.C_2 * (matrix_temp[2][0] - matrix_temp[3][0])
 
 
-def get_heat_flow_4(matrix_temp: np.ndarray, param: Parameters) -> float:
+def get_heat_flow_4(matrix_temp: np.ndarray, param: Parameters, h_in: float) -> float:
 
     '''
     各部温度から室内表面熱流を計算する
     :param matrix_temp: 各部温度計算結果 (5,1), C
     :param param: 計算条件パラメータ群
+    :param h_in: 室内側総合熱伝達率, W/(m2・K)
     :return: 断熱材+内装材伝導熱量, W/m2
     '''
-
-    # 固定値を設定
-    # Note: パラメータごとにこれらの値を計算する方法もあるが、ひとまず固定値とする
-    h_in = 9.0  # 室内側総合熱伝達率, W/(m2・K)
 
     return h_in * (matrix_temp[3][0] - param.theta_r)
 

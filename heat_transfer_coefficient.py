@@ -1,4 +1,5 @@
 import math
+from global_number import get_abs_temp, get_sgm, get_g, get_lambda_air, get_beta_air, get_mu_air
 
 
 # 有効放射率の計算（無限の平行面の場合）
@@ -9,33 +10,29 @@ def effective_emissivity_parallel(emissivity_1, emissivity_2):
 
 # 有効放射率の計算（二次元空間の場合）
 def effective_emissivity_two_dimension(emissivity_1, emissivity_2, l_d, l_s):
-    effective_emissivity = 1 / (1 / emissivity_1 - 1 / emissivity_2 - 2 + 1 / (1 / 2 * (1 + math.sqrt(l_d ^ 2 / l_s ^ 2) - l_d / l_s)))
+    effective_emissivity = 1.0 / (1.0 / emissivity_1 + 1.0 / emissivity_2 - 2.0 + 1.0 / (1.0 / 2.0 * (1.0 + math.sqrt(1.0 + l_d ** 2.0 / l_s ** 2.0) - l_d / l_s)))
     return effective_emissivity
 
 
 # 放射熱伝達率[W/(m2・K)]の計算
 def radiative_heat_transfer_coefficient(theta_1, theta_2, effective_emissivity):
-    t_m = (theta_1 + 273.15 + theta_2 + 273.15) / 2
-    sigma = 5.67 * (10 ** (-8))  # ステファン・ボルツマン定数（W/(m^2・K^4)）
-    h_r = 4 * sigma * effective_emissivity * (t_m ** 3)
+    t_m = (theta_1 + get_abs_temp() + theta_2 + get_abs_temp()) / 2
+    h_r = 4 * get_sgm() * effective_emissivity * (t_m ** 3)
     return h_r
 
 
 # 対流熱伝達率の計算[W/(m2・K)]
-def convective_heat_transfer_coefficient(v_a, theta_1, theta_2, angle, l_h, l_d):
-
-    # 固定値を設定
-    lambda_a = 0.026  # 空気の熱伝導率, W/(m・K)
+def convective_heat_transfer_coefficient(v_a, theta_1, theta_2, angle, l_h, l_d, c_a, rho_a):
 
     if theta_1 == theta_2:
         # 両表面の温度（theta_1とtheta_2）が同じ値のときはh_c = 1とする
         h_c = 1
     else:
         # ヌセルト数を計算
-        nusselt_number = get_nusselt_number(theta_1, theta_2, angle, l_h, l_d)
+        nusselt_number = get_nusselt_number(theta_1, theta_2, angle, l_h, l_d, c_a, rho_a)
 
         # 密閉空気層の自然対流熱伝達率を計算
-        h_base = nusselt_number * lambda_a / l_d
+        h_base = nusselt_number * get_lambda_air() / l_d
 
         # 通気層の対流熱伝達率の計算
         h_c = 2 * h_base * 4 * v_a
@@ -44,18 +41,10 @@ def convective_heat_transfer_coefficient(v_a, theta_1, theta_2, angle, l_h, l_d)
 
 
 # ヌセルト数の計算
-def get_nusselt_number(theta_1, theta_2, angle, l_h, l_d):
-
-    # 固定値を設定
-    g = 9.8                     # 重力加速度,m/s^2
-    beta_a = 3.7 * (10 ** -3)    # 空気の体膨張率, 1/K
-    lambda_a = 0.026            # 空気の熱伝導率, W/(m・K)
-    c_a = 1006                 # 空気の定圧比熱, J/(kg・K)
-    rho_a = 1.2                 # 空気の密度, kg/m3
-    mu_a = 1.8 * (10 ** -5)     # 空気の粘性率, Pa・s
+def get_nusselt_number(theta_1, theta_2, angle, l_h, l_d, c_a, rho_a):
 
     # レーリー数の計算
-    rayleigh_number = (g * beta_a * abs((theta_1 + 273.15) - (theta_2 + 273.15)) * (l_d ** 3) * (rho_a ** 2) * c_a) / (mu_a * lambda_a)
+    rayleigh_number = (get_g() * get_beta_air() * abs((theta_1 + get_abs_temp()) - (theta_2 + get_abs_temp())) * (l_d ** 3) * (rho_a ** 2) * c_a) / (get_mu_air() * get_lambda_air())
 
     # ヌセルト数の計算
     nusselt_number = 0
