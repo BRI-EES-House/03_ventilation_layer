@@ -32,7 +32,7 @@ def validation0():
                           l_w=0.455,
                           l_d=0.05,
                           angle=90.0,
-                          v_a=0.5,
+                          v_a=0.0,
                           l_s=100.,
                           emissivity_1=0.9,
                           emissivity_2=0.9)
