@@ -1,5 +1,5 @@
 import math
-import global_number as gn
+from global_number import get_gr_air, get_pr_air, get_lambda_air
 
 
 def calc_takeda_method(delta_t: float, direction: str) -> float:
@@ -36,9 +36,9 @@ def calc_shase_handbook_method(tw: float, tf: float, d: float, direction: str) -
     t_ave = (tw + tf) / 2.0
 
     # プラントル数の計算
-    pr = calc_prandtl_number(tw=tw, tf=tf)
+    pr = get_pr_air(t=t_ave)
     # グラスホフ数の計算
-    gr = calc_grashof_number(tw=tw, tf=tf, d=d)
+    gr = get_gr_air(tw=tw, tf=tf, d=d)
 
     # ヌセルト数の初期化
     nu = 0.0
@@ -58,7 +58,7 @@ def calc_shase_handbook_method(tw: float, tf: float, d: float, direction: str) -
         elif 2.0e7 < gr * pr < 3.0e10:
             nu = 0.14 * (gr * pr) ** (1.0 / 3.0)
 
-    return gn.get_lambda_air() * nu / d
+    return get_lambda_air(t=t_ave) * nu / d
 
 
 def calc_kimura_method(tw: float, tf: float, d: float, direction: str) -> float:
@@ -77,9 +77,9 @@ def calc_kimura_method(tw: float, tf: float, d: float, direction: str) -> float:
     t_ave = (tw + tf) / 2.0
 
     # プラントル数の計算
-    pr = calc_prandtl_number(tw=tw, tf=tf)
+    pr = get_pr_air(t=t_ave)
     # グラスホフ数の計算
-    gr = calc_grashof_number(tw=tw, tf=tf, d=d)
+    gr = get_gr_air(tw=tw, tf=tf, d=d)
 
     if direction == 'v':        # 垂直
         if gr * pr < 1.0e9:
@@ -102,7 +102,7 @@ def calc_ashrae_handbook_method(tw: float, tf: float, L: float, direction: str) 
     自然対流熱伝達率の計算
     :param tw: 表面温度[C]
     :param tf: 竜体温度[C]
-    :param L: 代表長さ[m]
+    :param L: 代表長さ[m]（垂直：高さ、水平：A/L_peri）
     :param direction: 向き　'v':垂直、'u':上向き、'd':下向き
     :return: 熱伝達率, W/(m2 K)
     '''
@@ -111,12 +111,13 @@ def calc_ashrae_handbook_method(tw: float, tf: float, L: float, direction: str) 
     t_ave = (tw + tf) / 2.0
 
     # プラントル数の計算
-    pr = calc_prandtl_number(tw=tw, tf=tf)
+    pr = get_pr_air(t=t_ave)
     # グラスホフ数の計算
-    gr = calc_grashof_number(tw=tw, tf=tf, d=d)
+    gr = get_gr_air(tw=tw, tf=tf, d=L)
     # レーリー数の計算
     ra = pr * gr
 
+    nu = 0.0
     if direction == 'v':        # 垂直
         if 1.0e-1 < ra < 1.0e9:
             nu = 0.68 + 0.67 * ra ** 0.25 / (1.0 + (0.492 / pr) ** (9.0 / 16.0)) ** (4.0 / 9.0)
@@ -135,35 +136,5 @@ def calc_ashrae_handbook_method(tw: float, tf: float, L: float, direction: str) 
         if 1.0e5 < ra < 1.0e10:
             nu = 0.27 * ra ** 0.25
 
-    return nu * gn.get_lambda_air() / L
+    return nu * get_lambda_air(t=t_ave) / L
 
-
-def calc_grashof_number(tw: float, tf: float, d: float) -> float:
-
-    '''
-    グラスホフ数の計算
-    :param tw: 表面温度[C]
-    :param tf: 竜体温度[C]
-    :param d: 代表長さ[m]
-    :return: グラスホフ数
-    '''
-
-    return gn.get_sgm() * gn.get_beta_air() * abs(tw - tf) * d ** 3.0 \
-           / (gn.get_mu_air() / gn.get_rho_air()) ** 2.0
-
-
-def calc_prandtl_number(tw: float, tf: float) -> float:
-
-    '''
-    プラントル数の計算
-    :param tw: 表面温度[C]
-    :param tf: 竜体温度[C]
-    :return: プラントル数
-    '''
-
-    # 動粘性係数
-    new_air = gn.get_mu_air() / gn.get_rho_air()
-    # 温度拡散率
-    a_air = gn.get_lambda_air() / (gn.get_rho_air() * gn.get_c_air())
-
-    return new_air / a_air
