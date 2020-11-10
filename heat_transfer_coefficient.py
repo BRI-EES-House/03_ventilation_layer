@@ -1,5 +1,5 @@
 import math
-from global_number import get_abs_temp, get_sgm, get_g, get_lambda_air, get_beta_air, get_mu_air
+from global_number import get_abs_temp, get_sgm, get_g, get_lambda_air, get_beta_air, get_mu_air, get_pr_air, get_c_air, get_rho_air
 
 
 # 有効放射率の計算（無限の平行面の場合）
@@ -22,17 +22,19 @@ def radiative_heat_transfer_coefficient(theta_1, theta_2, effective_emissivity):
 
 
 # 対流熱伝達率の計算[W/(m2・K)]
-def convective_heat_transfer_coefficient(v_a, theta_1, theta_2, angle, l_h, l_d, c_a, rho_a):
+def convective_heat_transfer_coefficient(v_a, theta_1, theta_2, angle, l_h, l_d):
+
+    theta_ave = (theta_1 + theta_2) / 2.0
 
     if theta_1 == theta_2:
         # 両表面の温度（theta_1とtheta_2）が同じ値のときはh_c = 0.0とする
         h_c = 0.0
     else:
         # ヌセルト数を計算
-        nusselt_number = get_nusselt_number(theta_1, theta_2, angle, l_h, l_d, c_a, rho_a)
+        nusselt_number = get_nusselt_number(theta_1, theta_2, angle, l_h, l_d)
 
         # 密閉空気層の自然対流熱伝達率を計算
-        h_base = nusselt_number * get_lambda_air() / l_d
+        h_base = nusselt_number * get_lambda_air(theta_ave) / l_d
 
         # 通気層の対流熱伝達率の計算
         if v_a > 0.0:
@@ -44,10 +46,16 @@ def convective_heat_transfer_coefficient(v_a, theta_1, theta_2, angle, l_h, l_d,
 
 
 # ヌセルト数の計算
-def get_nusselt_number(theta_1, theta_2, angle, l_h, l_d, c_a, rho_a):
+def get_nusselt_number(theta_1, theta_2, angle, l_h, l_d):
+
+    # 表面温度の平均値
+    theta_ave = (theta_1 + theta_2) / 2.0
+
+    # プラントル数の計算
+    pr = get_pr_air(theta_ave)
 
     # レーリー数の計算
-    rayleigh_number = (get_g() * get_beta_air() * abs((theta_1 + get_abs_temp()) - (theta_2 + get_abs_temp())) * (l_d ** 3) * (rho_a ** 2) * c_a) / (get_mu_air() * get_lambda_air())
+    rayleigh_number = (get_g() * get_beta_air(theta_ave) * abs(theta_1 - theta_2) * (l_d ** 3) * (get_rho_air(theta_ave) ** 2) * get_c_air(theta_ave)) / (get_mu_air(theta_ave) * get_lambda_air(theta_ave))
 
     # ヌセルト数の計算
     nusselt_number = 0
