@@ -31,7 +31,7 @@ def get_lambda_air(t: float) -> float:
     Returns:
         空気の熱伝導率, W/(m・K)
     """
-    return 0.0241 + 0.000077 * t
+    return 0.0241 + 7.7e-5 * t
 
 
 def get_beta_air(t: float) -> float:

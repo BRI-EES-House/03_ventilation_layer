@@ -138,3 +138,41 @@ def calc_ashrae_handbook_method(tw: float, tf: float, L: float, direction: str) 
 
     return nu * get_lambda_air(t=t_ave) / L
 
+
+def calc_jsme_databook(tw: float, tf: float, L: float, b: float) -> float:
+
+    '''
+    日本機械学会　伝熱工学資料改訂第5版
+    鉛直平行平板間の自然対流熱伝達率の計算
+    :param tw: 表面温度[C]
+    :param tf: 竜体温度[C]
+    :param L: 代表長さ[m]（垂直：高さ）
+    :param b: 平行平板の間隔[m]
+    :return: 熱伝達率, W/(m2 K)
+    '''
+
+    # 膜温度
+    t_ave = (tw + tf) / 2.0
+
+    # プラントル数の計算
+    pr = get_pr_air(t=t_ave)
+    # print('Pr=', pr)
+    # グラスホフ数の計算
+    gr = get_gr_air(tw=tw, tf=tf, d=b)
+    # print('Gr=', gr)
+    # 修正レーリー数の計算
+    ra = pr * gr * b / L
+    # print('Rab=', ra)
+    # print('log(ra)=', math.log(ra))
+
+    nu = (1.0 / 24.0) * ra \
+         / (1.0 + (1.0 / 18.0) ** 1.5 * (1.0 + (0.492 / pr) ** (9.0 / 16.0)) ** (2.0 / 3.0) * ra ** (9.0 / 8.0)) ** (2.0 / 3.0)
+    # print('nu1=', nu)
+    # nu = 1.0 / 18.8 * ra ** 0.85 * (1.0 - math.exp(-52.0 / ra)) ** 0.6
+    # print('nu2=', nu)
+
+    return nu * get_lambda_air(t=t_ave) / L
+
+
+if __name__ == '__main__':
+    print(calc_jsme_databook(tw=5, tf=18, L=3.0, b=0.03))
