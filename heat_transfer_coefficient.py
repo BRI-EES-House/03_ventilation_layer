@@ -38,7 +38,7 @@ def convective_heat_transfer_coefficient(v_a, theta_1, theta_2, angle, l_h, l_d)
 
         # 通気層の対流熱伝達率の計算
         if v_a > 0.0:
-            h_c = 2 * h_base * 4 * v_a
+            h_c = 2 * h_base + 4 * v_a
         else:
             h_c = h_base
 
