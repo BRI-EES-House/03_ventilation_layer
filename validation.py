@@ -89,7 +89,7 @@ def validation():
     print('Us= ', Us, 'Usd= ', Usd)
 
     # Usdを用いて計算した室内側熱流
-    theta_as_e = (status.matrix_temp[4][0] * status.h_cv + status.matrix_temp[1][0] * status.h_rv) \
+    theta_as_e = (status.matrix_temp[4] * status.h_cv + status.matrix_temp[1] * status.h_rv) \
                 / (status.h_cv + status.h_rv)
     q_usd = Usd * (theta_as_e - theta_r)
     print('q_usd= ', q_usd)
