@@ -48,7 +48,7 @@ def get_parameter_list() -> object:
 def get_wall_status_data_frame() -> pd.DataFrame:
     """
     通気層を有する壁体の総当たりパラメータを取得し、各ケースの計算結果を保有するDataFrameを作成する
-    :arg:
+    :param なし
     :return: DataFrame
     """
 
@@ -61,56 +61,70 @@ def get_wall_status_data_frame() -> pd.DataFrame:
     h_out = global_number.get_h_out()
     h_in = global_number.get_h_in()
 
-    # 計算結果格納用配列
-    # TODO: for文を使わずに処理ができないか検討する(for文だと処理が遅い）
-    # parms = []
-    matrix_temp = []
-    h_cv = []
-    h_rv = []
-    heat_flow_0 = []            # 屋外側表面熱流, W/m2
-    heat_flow_exhaust = []      # 通気層からの排気熱量, W/m2
-    heat_flow_4 = []            # 室内表面熱流, W/m2
+    # 計算結果格納用配列を用意
+    theta_out_surf = []     # 外気側表面温度[℃]
+    theta_1_surf = []       # 通気層に面する面1の表面温度[℃]
+    theta_2_surf = []       # 通気層に面する面1の表面温度[℃]
+    theta_in_surf = []      # 室内側表面温度[℃]
+    theta_as_ave = []       # 通気層の平均温度[℃]
+    h_cv = []               # 通気層の対流熱伝達率[W/(m2・K)]
+    h_rv = []               # 通気層の放射熱伝達率[W/(m2・K)]
+    theta_as_e = []         # 通気層の等価温度[℃]
+    k_e = []                # 通気層を有する壁体の相当熱貫流率を求めるための補正係数[-]
 
-    for row in df.itertuples():
-        # パラメータを設定
-        parms = (vw.Parameters(theta_e=row.theta_e,
-                               theta_r=row.theta_r,
-                               J_surf=row.j_surf,
-                               a_surf=row.a_surf,
-                               C_1=row.C_1,
-                               C_2=row.C_2,
-                               l_h=row.l_h,
-                               l_w=row.l_w,
-                               l_d=row.l_d,
-                               angle=row.angle,
-                               v_a=row.v_a,
-                               l_s=row.l_s,
-                               emissivity_1=row.emissivity_1,
-                               emissivity_2=row.emissivity_2))
+    # エラーログ出力用の設定
+    log = Log()
+    saved_handler = np.seterrcall(log)
 
-        # 通気層の状態値を取得
-        status = vw.get_wall_status_values(parms, h_out, h_in)
-        matrix_temp.append(status.matrix_temp)
-        h_cv.append(status.h_cv)
-        h_rv.append(status.h_rv)
+    with np.errstate(all='log'):  # withスコープ内でエラーが出た場合、Logを出力する
+        for row in df.itertuples():
+            print(row[0])
+            # パラメータを設定
+            parms = (vw.Parameters(theta_e=row.theta_e,
+                                   theta_r=row.theta_r,
+                                   J_surf=row.j_surf,
+                                   a_surf=row.a_surf,
+                                   C_1=row.C_1,
+                                   C_2=row.C_2,
+                                   l_h=row.l_h,
+                                   l_w=row.l_w,
+                                   l_d=row.l_d,
+                                   angle=row.angle,
+                                   v_a=row.v_a,
+                                   l_s=row.l_s,
+                                   emissivity_1=row.emissivity_1,
+                                   emissivity_2=row.emissivity_2))
 
-        # 屋外側表面熱流、通気層からの排気熱量、室内表面熱流を取得
-        heat_flow_0.append(vw.get_heat_flow_0(matrix_temp=status.matrix_temp, param=parms, h_out=h_out))
-        heat_flow_exhaust.append(vw.get_heat_flow_exhaust(matrix_temp=status.matrix_temp, param=parms,
-                                                          theta_as_in=parms.theta_e, h_cv=status.h_cv))
-        heat_flow_4.append(vw.get_heat_flow_4(matrix_temp=status.matrix_temp, param=parms, h_in=h_in))
+            # 通気層の状態値を取得
+            status = vw.get_wall_status_values(parms, h_out, h_in)
+            theta_out_surf.append(status.matrix_temp[0])
+            theta_1_surf.append(status.matrix_temp[1])
+            theta_2_surf.append(status.matrix_temp[2])
+            theta_in_surf.append(status.matrix_temp[3])
+            theta_as_ave.append(status.matrix_temp[4])
+            h_cv.append(status.h_cv)
+            h_rv.append(status.h_rv)
+
+            # 通気層の等価温度を取得
+            theta_as_e.append(epf.get_theata_as_e(status.matrix_temp[4], status.matrix_temp[1],
+                                                  status.h_cv, status.h_rv))
+
+            # 相当外気温度を計算
+            theta_SAT = epf.get_theta_SAT(row.theta_e, row.a_surf, row.j_surf, h_out)
+
+            # 通気層を有する壁体の相当熱貫流率を求めるための補正係数を取得
+            k_e.append(epf.get_weight_factor_of_u_s_dash(status.matrix_temp[4], row.theta_r, theta_SAT))
 
     # 計算結果をDataFrameに追加
-    # TODO: matrix_tempは配列のままではなく個別の値としてDataFrameに入れる
-    df['matrix_temp'] = matrix_temp
+    df['theta_out_surf'] = theta_out_surf
+    df['theta_1_surf'] = theta_1_surf
+    df['theta_2_surf'] = theta_2_surf
+    df['theta_in_surf'] = theta_in_surf
+    df['theta_as_ave'] = theta_as_ave
     df['h_cv'] = h_cv
     df['h_rv'] = h_rv
-    df['heat_flow_0'] = heat_flow_0
-    df['heat_flow_exhaust'] = heat_flow_exhaust
-    df['heat_flow_4'] = heat_flow_4
-    # df['parms'] = parms
-    # print(df['parms'])
-    # df['matrix_temp'] = vw.get_wall_status_values(df['parms'], h_out, h_in).matrix_temp
+    df['theta_as_e'] = theta_as_e
+    df['k_e'] = k_e
 
     return df
 
