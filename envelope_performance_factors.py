@@ -87,3 +87,17 @@ def get_u_s_dash(r_s_e: float, r_s_r: float, C_2: float, h_cv: float, h_rv: floa
     # 省エネ基準でのU値を計算
     u_s = 1 / (r_s_e + 1 / C_2 + r_s_r)
     return 1/(1/u_s - r_s_e + 1/(h_rv + h_cv))
+
+
+def get_theata_as_e(theta_as_ave: float, theta_1_surf: float, h_cv: float, h_rv: float) -> float:
+    """
+    通気層の等価温度[℃]を計算する
+
+    :param theta_as_ave:    通気層の平均温度[℃]
+    :param theta_1_surf:    通気層内の面1の温度[℃]
+    :param h_cv:            通気層の対流熱伝達率[W/(m2・K)]
+    :param h_rv:            通気層の放射熱伝達率[W/(m2・K)]
+    :return:                通気層の等価温度[℃]
+    """
+
+    return (theta_as_ave * h_cv + theta_1_surf * h_rv) / (h_cv + h_rv)
