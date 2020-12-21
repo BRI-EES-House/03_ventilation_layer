@@ -56,8 +56,16 @@ def get_weight_factor_of_u_s_dash(theta_as_ave: float, theta_r: float, theta_SAT
 
 
 # 通気層を有する壁体の日射熱取得率(-)の計算
+# TODO: parmを個別の変数に書き下す、固定値はglobal_numberから取得する、通気層の角度（angle）によって表面熱伝達抵抗を変更する
 def solar_heat_gain_coefficient(parm: ventilation_wall.Parameters, theta_as_ave: float, h_cv: float, h_rv: float):
+    """
 
+    :param parm:
+    :param theta_as_ave:
+    :param h_cv:
+    :param h_rv:
+    :return:
+    """
     # 固定値を設定
     # Note:固定値はグローバル変数にするのがよいか
     h_out = 25.0    # 室外側総合熱伝達率, W/(m2・K)
@@ -77,13 +85,30 @@ def solar_heat_gain_coefficient(parm: ventilation_wall.Parameters, theta_as_ave:
     return eta_e
 
 
-# 相当外気温度を計算
-def get_theta_SAT(theta_e: float, a_surf: float, J_surf: float, h_out: float):
-    return theta_e + (a_surf * J_surf) / h_out
+def get_theta_SAT(theta_e: float, a_surf: float, j_surf: float, h_out: float):
+    """
+    相当外気温度[℃]を計算する
+
+    :param theta_e: 外気温度[℃]
+    :param a_surf:  外気側表面日射吸収率[-]
+    :param j_surf:  外気側表面に入射する日射量[W/m2]
+    :param h_out:   室外側総合熱伝達率[W/(m2・K)]
+    :return:        相当外気温度[℃]
+    """
+    return theta_e + (a_surf * j_surf) / h_out
 
 
-# 温度、風速依存の熱伝達率を使用したU値を計算
 def get_u_s_dash(r_s_e: float, r_s_r: float, C_2: float, h_cv: float, h_rv: float):
+    """
+    通気層から室内までの熱貫流率（温度、風速依存の熱伝達率を使用した熱貫流率)U'_s[W/(m2・K)]を計算する
+
+    :param r_s_e:   室外側表面熱伝達抵抗（省エネ基準の規定値）[m2・K)/W]
+    :param r_s_r:   室内側表面熱伝達抵抗（省エネ基準の規定値）[m2・K)/W]
+    :param C_2:     室内側部材の熱コンダクタンス[W/(m2・K)]
+    :param h_cv:    通気層の対流熱伝達率[W/(m2・K)]
+    :param h_rv:    通気層の放射熱伝達率[W/(m2・K)]
+    :return:        気層から室内までの熱貫流率（温度、風速依存の熱伝達率を使用）[W/(m2・K)]
+    """
     # 省エネ基準でのU値を計算
     u_s = 1 / (r_s_e + 1 / C_2 + r_s_r)
     return 1/(1/u_s - r_s_e + 1/(h_rv + h_cv))
