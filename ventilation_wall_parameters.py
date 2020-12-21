@@ -4,6 +4,16 @@ import global_number
 import ventilation_wall as vw
 
 
+class Log:
+    def write(self, msg):
+        """
+        np.seterrのエラーログ記録用の処理（エラー発生時はコンソールにメッセージを出力する）
+        :param msg:　エラーメッセージ
+        :return: なし
+        """
+        print("LOG: %s" % msg)
+
+
 def get_parameter_list() -> object:
     """
     複数のパラメータの総当たりの組み合わせ（直積）のリストを作成する
