@@ -129,5 +129,18 @@ def get_wall_status_data_frame() -> pd.DataFrame:
     return df
 
 
-#デバッグ用
-#get_wall_status_data_frame()
+def dump_csv_all_case_result():
+    # 総当たりのパラメータと計算結果を取得
+    df = pd.DataFrame(get_wall_status_data_frame())
+    # CSV出力
+    df.to_csv("wall_status_data_frame.csv")
+
+
+if __name__ == '__main__':
+
+    dump_csv_all_case_result()
+
+
+# デバッグ用
+# dump_csv_all_case_result()
+# print(np.median([-20,40]))
