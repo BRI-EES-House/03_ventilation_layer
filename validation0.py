@@ -102,7 +102,7 @@ def validation0():
     print('Usから熱流を計算', Ue * (theta_e - theta_r) + eta_e * j_surf)
 
     # 層構成から計算した熱貫流率
-    Ue_from_layer = 1.0 / (1.0 / h_o + 1.0 / h_i + 1.0 / c_1 + 1.0 / c_2 + 1.0 / (status.h_cv + status.h_rv))
+    Ue_from_layer = 1.0 / (1.0 / h_o + 1.0 / h_i + 1.0 / c_1 + 1.0 / c_2 + 1.0 / (status.h_cv / 2.0 + status.h_rv))
     print('Ue_from_layer= ', Ue_from_layer)
 
 
