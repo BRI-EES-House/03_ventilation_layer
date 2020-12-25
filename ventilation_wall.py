@@ -167,24 +167,38 @@ def get_wall_status_values(parm: Parameters, h_out: float, h_in: float) -> WallS
     matrix_temp[3] = parm.theta_e + (parm.theta_r - parm.theta_e) / (4 * 1)
     matrix_temp[4] = (matrix_temp[1] + matrix_temp[2]) / 2
 
-    # 通気層内の各点の熱収支式が成り立つときの各点の温度を取得
-    answer_T = optimize.root(fun=get_heat_balance, x0=matrix_temp, args=(parm, h_out, h_in), method='hybr')
-    matrix_temp_fixed = answer_T.x
+    # 通気層内の各層の熱収支式の最適解を収束計算で求める
+    optimize_result = optimize.root(fun=get_heat_balance, x0=matrix_temp, args=(parm, h_out, h_in), method='hybr')
 
-    # 対流熱伝達率の計算
-    h_cv = heat_transfer_coefficient.convective_heat_transfer_coefficient(parm.v_a, matrix_temp_fixed[1], matrix_temp_fixed[2], parm.angle,
-                                                                          parm.l_h, parm.l_d)
+    # 収束した場合は各層の状態値を設定、収束しなかった場合はすべて無効（Nan）とする
+    if optimize_result.success:
 
-    # 有効放射率の計算
-    effective_emissivity = heat_transfer_coefficient.effective_emissivity_parallel(parm.emissivity_1, parm.emissivity_2)
+        # 熱収支式が成り立つときの各層の温度を取得
+        matrix_temp_fixed = optimize_result.x
 
-    # 放射熱伝達率の計算
-    h_rv = heat_transfer_coefficient.radiative_heat_transfer_coefficient(matrix_temp_fixed[1], matrix_temp_fixed[2], effective_emissivity)
+        # 各層の熱収支を計算
+        heat_balance = get_heat_balance(matrix_temp_fixed, parm, h_out, h_in)
 
-    return WallStatusValues(matrix_temp = matrix_temp_fixed, h_cv = h_cv, h_rv = h_rv)
+        # 対流熱伝達率の計算
+        h_cv = heat_transfer_coefficient.convective_heat_transfer_coefficient(v_a=parm.v_a, theta_1=matrix_temp_fixed[1],
+                                                                              theta_2=matrix_temp_fixed[2],
+                                                                              angle=parm.angle, l_h=parm.l_h, l_d=parm.l_d)
 
+        # 有効放射率の計算
+        effective_emissivity = heat_transfer_coefficient.effective_emissivity_parallel(emissivity_1=parm.emissivity_1,
+                                                                                       emissivity_2=parm.emissivity_2)
 
-def get_heat_flow_0(matrix_temp: np.ndarray, param: Parameters, h_out: float) -> float:
+        # 放射熱伝達率の計算
+        h_rv = heat_transfer_coefficient.radiative_heat_transfer_coefficient(theta_1=matrix_temp_fixed[1],
+                                                                             theta_2=matrix_temp_fixed[2],
+                                                                             effective_emissivity=effective_emissivity)
+
+    else:
+        matrix_temp_fixed = np.full(5, np.nan)
+        heat_balance = np.full(5, np.nan)
+        h_cv = np.nan
+        h_rv = np.nan
+
     return WallStatusValues(matrix_temp=matrix_temp_fixed, matrix_heat_balance=heat_balance, h_cv=h_cv, h_rv=h_rv,
                             is_optimize_succeed=optimize_result.success, optimize_status=optimize_result.status,
                             optimize_message=optimize_result.message
