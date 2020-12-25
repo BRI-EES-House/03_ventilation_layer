@@ -168,7 +168,7 @@ def get_wall_status_values(parm: Parameters, h_out: float, h_in: float) -> WallS
     matrix_temp[4] = (matrix_temp[1] + matrix_temp[2]) / 2
 
     # 通気層内の各層の熱収支式の最適解を収束計算で求める
-    optimize_result = optimize.root(fun=get_heat_balance, x0=matrix_temp, args=(parm, h_out, h_in), method='hybr')
+    optimize_result = optimize.root(fun=get_heat_balance, x0=matrix_temp, args=(parm, h_out, h_in), method='lm')
 
     # 収束した場合は各層の状態値を設定、収束しなかった場合はすべて無効（Nan）とする
     if optimize_result.success:
