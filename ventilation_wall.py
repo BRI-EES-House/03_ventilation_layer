@@ -59,11 +59,23 @@ class WallStatusValues:
     # 通気層内の各点の温度, degree C
     matrix_temp: np.zeros(shape=(5, 1))
 
+    # 各層の熱収支
+    matrix_heat_balance: np.zeros(shape=(5, 1))
+
     # 対流熱伝達率, W/(m2・K)
     h_cv: float
 
     # 放射熱伝達率, W/(m2・K)
     h_rv: float
+
+    # 最適化が正常に終了したかどうか
+    is_optimize_succeed: bool
+
+    # 最適化の終了ステータス
+    optimize_status: int
+
+    # 最適化の終了メッセージ
+    optimize_message: str
 
 
 def get_heat_balance(matrix_temp: np.zeros(5), parm: Parameters, h_out: float, h_in: float) -> np.zeros(5):
@@ -173,6 +185,10 @@ def get_wall_status_values(parm: Parameters, h_out: float, h_in: float) -> WallS
 
 
 def get_heat_flow_0(matrix_temp: np.ndarray, param: Parameters, h_out: float) -> float:
+    return WallStatusValues(matrix_temp=matrix_temp_fixed, matrix_heat_balance=heat_balance, h_cv=h_cv, h_rv=h_rv,
+                            is_optimize_succeed=optimize_result.success, optimize_status=optimize_result.status,
+                            optimize_message=optimize_result.message
+                            )
 
 
 def get_heat_flow_0(matrix_temp: np.ndarray, param: Parameters, h_out: float) -> float:
