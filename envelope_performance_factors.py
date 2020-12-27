@@ -43,17 +43,23 @@ def overall_heat_transfer_coefficient(theta_e: float, theta_r: float, a_surf: fl
     return u_e
 
 
-def get_weight_factor_of_u_s_dash(theta_as_ave: float, theta_r: float, theta_SAT: float) -> float:
+def get_k_e(theta_as_e: float, theta_r: float, theta_SAT: float) -> float:
     """
-    通気層を有する壁体の相当熱貫流率を求めるための補正係数[-]を計算する
+    通気層を有する壁体の相当熱貫流率を求めるための補正係数（k_e）[-]を計算する
 
-    :param theta_as_ave:    通気層の平均温度[℃]
-    :param theta_r:         室内温度[℃]
-    :param theta_SAT:       相当外気温度[℃]
-    :return:                通気層を有する壁体の相当熱貫流率を求めるための補正係数[-]
+    :param theta_as_e:    通気層の等価温度[℃]
+    :param theta_r:       室内温度[℃]
+    :param theta_SAT:     相当外気温度[℃]
+    :return:              通気層を有する壁体の相当熱貫流率を求めるための補正係数[-]
     """
 
-    return (theta_as_ave - theta_r) / (theta_SAT - theta_r)
+    if abs(theta_SAT - theta_r) < 0.001:
+        # 相当外気温度と室温が同じ値の場合、貫流熱がゼロになるので、Nanとする
+        k_e = np.nan
+    else:
+        k_e = (theta_as_e - theta_r) / (theta_SAT - theta_r)
+
+    return k_e
 
 
 # 通気層を有する壁体の日射熱取得率(-)の計算
