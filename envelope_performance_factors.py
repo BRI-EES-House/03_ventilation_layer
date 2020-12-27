@@ -23,16 +23,11 @@ def overall_heat_transfer_coefficient(theta_e: float, theta_r: float, a_surf: fl
     # 固定値を設定
     h_out = global_number.get_h_out()   # 室外側総合熱伝達率, W/(m2・K)
 
-    # 表面熱伝達抵抗を設定
-    # TODO: 通気層の角度（angle）が90°の場合は外壁の値（0.11）、90°以外の場合は屋根の値（0.09）を使用する
-    r_s_e = 0.11    # 室外側表面熱伝達抵抗, (m2・K)/W, 省エネ基準の規定値
-    r_s_r = 0.11    # 室内側表面熱伝達抵抗, (m2・K)/W, 省エネ基準の規定値
-
     # 相当外気温度を計算
     theta_SAT = get_theta_SAT(theta_e, a_surf, j_surf, h_out)
 
     # 温度、風速依存の熱伝達率を使用したU値に修正
-    u_s_dash = get_u_s_dash(r_s_e, r_s_r, C_2, h_cv, h_rv)
+    u_s_dash = get_u_s_dash(angle, C_2, h_cv, h_rv)
 
     # 通気層を有する壁体の相当熱貫流率を求めるための補正係数を計算
     k_e = get_k_e(theta_as_e, theta_r, theta_SAT)
