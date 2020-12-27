@@ -23,9 +23,11 @@ def get_parameter_list() -> object:
     :return: 総当たりのパラメータリスト
     """
 
-    # Note: 各パラメータには、一部を除いて想定される上下限値と中央値の3点を与える
-    theta_e = np.array([-20.0, np.median([-20.0, 40.0]), 40.0], dtype=float)        # 外気温度, degree C
-    theta_r = np.array([20.0, np.median([20.0, 27.0]), 27.0], dtype=float)          # 室内温度,　degree C
+    # 外気温度は、冬期条件（-10.0～10.0degC）、夏期条件（25.0～35.0degC）をそれぞれ与える
+    theta_e = np.array([-10.0, 0.0, 10.0, 25.0, 30.0, 35.0], dtype=float)           # 外気温度, degree C
+    # 室内温度は、冬期条件（20.0degC）と夏期条件（27.0degC）を与える
+    theta_r = np.array([20.0, 27.0], dtype=float)                                   # 室内温度,　degree C
+    # 上記以外のパラメータには、一部を除いて想定される上下限値と中央値の3点を与える
     j_surf = np.array([0.0, np.median([0.0, 1000.0]), 1000.0], dtype=float)         # 外気側表面に入射する日射量, W/m2
     a_surf = np.array([0.0, np.median([0.0, 1.0]), 1.0], dtype=float)               # 外気側表面日射吸収率
     C_1 = np.array([0.5, np.median([0.5, 100.0]), 100.0], dtype=float)              # 外気側部材の熱コンダクタンス,W/(m2・K)
