@@ -35,10 +35,13 @@ def overall_heat_transfer_coefficient(theta_e: float, theta_r: float, a_surf: fl
     u_s_dash = get_u_s_dash(r_s_e, r_s_r, C_2, h_cv, h_rv)
 
     # 通気層を有する壁体の相当熱貫流率を求めるための補正係数を計算
-    k_e = get_weight_factor_of_u_s_dash(theta_as_ave, theta_r, theta_SAT)
+    k_e = get_k_e(theta_as_e, theta_r, theta_SAT)
 
-    # 通気層を有する壁体の熱貫流率(W/(m2・K))を計算
-    u_e = u_s_dash * k_e
+    # 通気層を有する壁体の熱貫流率(W/(m2・K))を計算（k_eがnanのときはnanとする）
+    if np.isnan(k_e):
+        u_e = np.nan
+    else:
+        u_e = u_s_dash * k_e
 
     return u_e
 
