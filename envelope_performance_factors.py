@@ -1,11 +1,12 @@
+import numpy as np
 import ventilation_wall
 import global_number
 
 
 def overall_heat_transfer_coefficient(theta_e: float, theta_r: float, a_surf: float, j_surf: float, C_2: float,
-                                      angle: float, theta_as_ave: float, h_cv: float, h_rv: float) -> float:
+                                      angle: float, theta_as_e: float, h_cv: float, h_rv: float) -> float:
     """
-    通気層を有する壁体の熱貫流率[W/(m2・K)]を計算する
+    通気層を考慮した壁体の相当熱貫流率[W/(m2・K)]を計算する
 
     :param theta_e: 外気温度[℃]
     :param theta_r: 室内温度[℃]
@@ -13,7 +14,7 @@ def overall_heat_transfer_coefficient(theta_e: float, theta_r: float, a_surf: fl
     :param j_surf:  外気側表面に入射する日射量[W/m2]
     :param C_2:     室内側部材の熱コンダクタンス[W/(m2・K)]
     :param angle:   通気層の傾斜角[°]
-    :param theta_as_ave: 通気層の平均温度[℃]
+    :param theta_as_e: 通気層の等価温度[℃]
     :param h_cv:    通気層の対流熱伝達率[W/(m2・K)]
     :param h_rv:    通気層の放射熱伝達率[W/(m2・K)]
     :return:        通気層の等価温度[℃]
