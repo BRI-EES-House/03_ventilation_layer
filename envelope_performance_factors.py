@@ -108,19 +108,29 @@ def get_theta_SAT(theta_e: float, a_surf: float, j_surf: float, h_out: float):
     return theta_e + (a_surf * j_surf) / h_out
 
 
-def get_u_s_dash(r_s_e: float, r_s_r: float, C_2: float, h_cv: float, h_rv: float):
+def get_u_s_dash(angle: float, C_2: float, h_cv: float, h_rv: float):
     """
     通気層から室内までの熱貫流率（温度、風速依存の熱伝達率を使用した熱貫流率)U'_s[W/(m2・K)]を計算する
 
-    :param r_s_e:   室外側表面熱伝達抵抗（省エネ基準の規定値）[m2・K)/W]
-    :param r_s_r:   室内側表面熱伝達抵抗（省エネ基準の規定値）[m2・K)/W]
+    :param angle:   通気層の傾斜角[°]
     :param C_2:     室内側部材の熱コンダクタンス[W/(m2・K)]
     :param h_cv:    通気層の対流熱伝達率[W/(m2・K)]
     :param h_rv:    通気層の放射熱伝達率[W/(m2・K)]
     :return:        気層から室内までの熱貫流率（温度、風速依存の熱伝達率を使用）[W/(m2・K)]
     """
+
+    # 表面熱伝達抵抗を設定
+    # 室外側表面熱伝達抵抗は、省エネ基準に規定の値とする（通気層の角度（angle）が90°の場合は外壁の値（0.11）、90°以外の場合は屋根の値（0.09）を使用）
+    if angle == 90.0:
+        r_s_e = 0.11  # 室外側表面熱伝達抵抗, (m2・K)/W
+        r_s_r = 0.11  # 室内側表面熱伝達抵抗, (m2・K)/W
+    else:
+        r_s_e = 0.09  # 室外側表面熱伝達抵抗, (m2・K)/W
+        r_s_r = 0.09  # 室内側表面熱伝達抵抗, (m2・K)/W
+
     # 省エネ基準でのU値を計算
     u_s = 1 / (r_s_e + 1 / C_2 + r_s_r)
+
     return 1/(1/u_s - r_s_e + 1/(h_rv + h_cv))
 
 
