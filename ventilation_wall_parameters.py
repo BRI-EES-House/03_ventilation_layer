@@ -23,9 +23,11 @@ def get_parameter_list() -> object:
     :return: 総当たりのパラメータリスト
     """
 
-    # Note: 各パラメータには、一部を除いて想定される上下限値と中央値の3点を与える
-    theta_e = np.array([-20.0, np.median([-20.0, 40.0]), 40.0], dtype=float)        # 外気温度, degree C
-    theta_r = np.array([20.0, np.median([20.0, 27.0]), 27.0], dtype=float)          # 室内温度,　degree C
+    # 外気温度は、冬期条件（-10.0～10.0degC）、夏期条件（25.0～35.0degC）をそれぞれ与える
+    theta_e = np.array([-10.0, 0.0, 10.0, 25.0, 30.0, 35.0], dtype=float)           # 外気温度, degree C
+    # 室内温度は、冬期条件（20.0degC）と夏期条件（27.0degC）を与える
+    theta_r = np.array([20.0, 27.0], dtype=float)                                   # 室内温度,　degree C
+    # 上記以外のパラメータには、一部を除いて想定される上下限値と中央値の3点を与える
     j_surf = np.array([0.0, np.median([0.0, 1000.0]), 1000.0], dtype=float)         # 外気側表面に入射する日射量, W/m2
     a_surf = np.array([0.0, np.median([0.0, 1.0]), 1.0], dtype=float)               # 外気側表面日射吸収率
     C_1 = np.array([0.5, np.median([0.5, 100.0]), 100.0], dtype=float)              # 外気側部材の熱コンダクタンス,W/(m2・K)
@@ -62,6 +64,7 @@ def get_wall_status_data_frame() -> pd.DataFrame:
     h_in = global_number.get_h_in()
 
     # 計算結果格納用配列を用意
+    theta_sat = []          # 相当外気温度[℃]
     theta_out_surf = []     # 外気側表面温度[℃]
     theta_1_surf = []       # 通気層に面する面1の表面温度[℃]
     theta_2_surf = []       # 通気層に面する面1の表面温度[℃]
@@ -70,7 +73,15 @@ def get_wall_status_data_frame() -> pd.DataFrame:
     h_cv = []               # 通気層の対流熱伝達率[W/(m2・K)]
     h_rv = []               # 通気層の放射熱伝達率[W/(m2・K)]
     theta_as_e = []         # 通気層の等価温度[℃]
+    q_room_side = []        # 室内表面熱流[W/m2]
     k_e = []                # 通気層を有する壁体の相当熱貫流率を求めるための補正係数[-]
+    heat_balance_0 = []     # 外気側表面の熱収支収支[W/m2]
+    heat_balance_1 = []     # 通気層に面する面1の熱収支[W/m2]
+    heat_balance_2 = []     # 通気層に面する面2の熱収支[W/m2]
+    heat_balance_3 = []     # 室内側表面の熱収支[W/m2]
+    heat_balance_4 = []     # 通気層内空気の熱収支[W/m2]
+    is_optimize_succeed = []    # 最適化が正常に終了したかどうか
+    optimize_message = []   # 最適化の終了メッセージ
 
     # エラーログ出力用の設定
     log = Log()
@@ -106,16 +117,34 @@ def get_wall_status_data_frame() -> pd.DataFrame:
             h_rv.append(status.h_rv)
 
             # 通気層の等価温度を取得
-            theta_as_e.append(epf.get_theata_as_e(status.matrix_temp[4], status.matrix_temp[1],
-                                                  status.h_cv, status.h_rv))
+            theta_as_e_buf = epf.get_theata_as_e(status.matrix_temp[4], status.matrix_temp[1],
+                                                  status.h_cv, status.h_rv)
+            theta_as_e.append(theta_as_e_buf)
 
             # 相当外気温度を計算
-            theta_SAT = epf.get_theta_SAT(row.theta_e, row.a_surf, row.j_surf, h_out)
+            theta_sat_buf = epf.get_theta_SAT(row.theta_e, row.a_surf, row.j_surf, h_out)
+            theta_sat.append(theta_sat_buf)
 
             # 通気層を有する壁体の相当熱貫流率を求めるための補正係数を取得
-            k_e.append(epf.get_weight_factor_of_u_s_dash(status.matrix_temp[4], row.theta_r, theta_SAT))
+            k_e.append(epf.get_k_e(theta_as_e_buf, row.theta_r, theta_sat_buf))
+
+            # 室内側表面熱流を計算
+            q_room_side.append(epf.get_heat_flow_room_side(row.angle, row.C_2, status.h_cv, status.h_rv,
+                                                           theta_as_e_buf, row.theta_r))
+
+            # 各層の熱収支収支を取得
+            heat_balance_0.append(status.matrix_heat_balance[0])
+            heat_balance_1.append(status.matrix_heat_balance[1])
+            heat_balance_2.append(status.matrix_heat_balance[2])
+            heat_balance_3.append(status.matrix_heat_balance[3])
+            heat_balance_4.append(status.matrix_heat_balance[4])
+
+            # 最適化に関する情報を取得
+            is_optimize_succeed.append(status.is_optimize_succeed)
+            optimize_message.append(status.optimize_message)
 
     # 計算結果をDataFrameに追加
+    df['theta_sat'] = theta_sat
     df['theta_out_surf'] = theta_out_surf
     df['theta_1_surf'] = theta_1_surf
     df['theta_2_surf'] = theta_2_surf
@@ -125,6 +154,14 @@ def get_wall_status_data_frame() -> pd.DataFrame:
     df['h_rv'] = h_rv
     df['theta_as_e'] = theta_as_e
     df['k_e'] = k_e
+    df['q_room_side'] = q_room_side
+    df['heat_balance_0'] = heat_balance_0
+    df['heat_balance_1'] = heat_balance_1
+    df['heat_balance_2'] = heat_balance_2
+    df['heat_balance_3'] = heat_balance_3
+    df['heat_balance_4'] = heat_balance_4
+    df['is_optimize_succeed'] = is_optimize_succeed
+    df['optimize_message'] = optimize_message
 
     return df
 
