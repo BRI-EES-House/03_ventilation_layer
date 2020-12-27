@@ -141,3 +141,23 @@ def get_theata_as_e(theta_as_ave: float, theta_1_surf: float, h_cv: float, h_rv:
     """
 
     return (theta_as_ave * h_cv + theta_1_surf * h_rv) / (h_cv + h_rv)
+
+
+def get_heat_flow_room_side(angle: float, C_2: float, h_cv: float, h_rv: float,
+                            theta_as_e: float, theta_r: float) -> float:
+    """
+    壁体の室内側表面熱流[W/m2]を計算する
+
+    :param angle:   通気層の傾斜角[°]
+    :param C_2:     室内側部材の熱コンダクタンス[W/(m2・K)]
+    :param h_cv:    通気層の対流熱伝達率[W/(m2・K)]
+    :param h_rv:    通気層の放射熱伝達率[W/(m2・K)]
+    :param theta_as_e:  通気層の平均温度[℃]
+    :param theta_r:     室内温度[℃]
+    :return:            通気層の等価温度[℃]
+    """
+
+    # 通気層から室内までの熱貫流率（温度、風速依存の熱伝達率を使用した熱貫流率)[W / (m2・K)]を取得
+    u_s_dash = get_u_s_dash(angle, C_2, h_cv, h_rv)
+
+    return u_s_dash * (theta_as_e - theta_r)
