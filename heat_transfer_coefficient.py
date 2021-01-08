@@ -100,8 +100,31 @@ def radiative_heat_transfer_coefficient_detailed(theta_1: float, theta_2: float,
     return h_rv
 
 
-# 対流熱伝達率の計算[W/(m2・K)]
-def convective_heat_transfer_coefficient(v_a, theta_1, theta_2, angle, l_h, l_d):
+def get_convective_heat_transfer_coefficient(calc_mode: str, v_a: float, theta_1: float, theta_2: float, angle: float, l_h: float, l_d: float) -> float:
+    """
+    計算モードに応じた対流熱伝達率を計算する
+
+    :param calc_mode:   計算モード
+    :param v_a:         通気層の平均風速, m/s
+    :param theta_1:     通気層に面する面1の表面温度, degC
+    :param theta_2:     通気層に面する面2の表面温度, degC
+    :param angle:       通気層の傾斜角, degree
+    :param l_h:         通気層の長さ, m
+    :param l_d:         通気層の厚さ, m
+    :return:            対流熱伝達率, W/(m2・K)
+    """
+    if calc_mode == "detailed":
+        h_cv = convective_heat_transfer_coefficient_detailed(v_a, theta_1, theta_2, angle, l_h, l_d)
+    elif calc_mode == "simplified_winter":
+        h_cv = convective_heat_transfer_coefficient_simplified_winter(v_a)
+    elif calc_mode == "simplified_summer":
+        h_cv = convective_heat_transfer_coefficient_simplified_summer(v_a)
+    elif calc_mode == "simplified_all_season":
+        h_cv = convective_heat_transfer_coefficient_simplified_all_season(v_a)
+    else:
+        raise ValueError("指定された計算モードは対象外です")
+
+    return h_cv
 
 
 def convective_heat_transfer_coefficient_simplified_winter(v_a: float) -> float:
