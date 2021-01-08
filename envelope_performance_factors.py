@@ -166,6 +166,34 @@ def get_u_i(C_2: float, h_cv: float, h_rv: float) -> float:
     return 1.0 / (1.0/(h_cv + h_rv) + 1.0/C_2 + 1.0/h_in)
 
 
+def get_r_o(C_1: float) -> float:
+    """
+    室外側から通気層表面までの熱抵抗を計算する
+
+    :param C_1:     外気側部材の熱コンダクタンス[W/(m2・K)]
+    :return:        室外側から通気層表面までの熱抵抗[(m2・K)/W]
+    """
+
+    # 固定値を設定
+    h_out = global_number.get_h_out()  # 室外側総合熱伝達率, W/(m2・K)
+
+    return 1.0 / h_out + 1.0 / C_1
+
+
+def get_r_i(C_2: float) -> float:
+    """
+    室内側から通気層表面までの熱抵抗を計算する
+
+    :param C_2:     室内側部材の熱コンダクタンス[W/(m2・K)]
+    :return:        室内側から通気層表面までの熱抵抗[(m2・K)/W]
+    """
+
+    # 固定値を設定
+    h_in = global_number.get_h_in()  # 室内側総合熱伝達率, W/(m2・K)
+
+    return 1.0 / h_in + 1.0 / C_2
+
+
 def get_theata_as_e(theta_as_ave: float, theta_1_surf: float, h_cv: float, h_rv: float) -> float:
     """
     通気層の等価温度[℃]を計算する
