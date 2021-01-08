@@ -198,15 +198,19 @@ def get_theata_as_e(theta_as_ave: float, theta_1_surf: float, h_cv: float, h_rv:
     """
     通気層の等価温度[℃]を計算する
 
-    :param theta_as_ave:    通気層の平均温度[℃]
-    :param theta_1_surf:    通気層内の面1の温度[℃]
+    :param theta_as_ave:    通気層の平均温度[degC]
+    :param theta_1_surf:    通気層内の面1の温度[degC]
     :param h_cv:            通気層の対流熱伝達率[W/(m2・K)]
     :param h_rv:            通気層の放射熱伝達率[W/(m2・K)]
-    :return:                通気層の等価温度[℃]
+    :return:                通気層の等価温度[degC]
     """
 
-    return (theta_as_ave * h_cv + theta_1_surf * h_rv) / (h_cv + h_rv)
+    if abs(h_rv + h_cv) < 0.001:
+        theata_as_e = np.nan
+    else:
+        theata_as_e = (theta_as_ave * h_cv + theta_1_surf * h_rv) / (h_cv + h_rv)
 
+    return theata_as_e
 
 def get_heat_flow_room_side(angle: float, C_2: float, h_cv: float, h_rv: float,
                             theta_as_e: float, theta_r: float) -> float:
