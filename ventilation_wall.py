@@ -218,7 +218,7 @@ def get_heat_flow_0(matrix_temp: np.ndarray, param: Parameters, h_out: float) ->
     # 相当外気温度を計算
     theta_sat = param.theta_e + (param.a_surf * param.J_surf) / h_out
 
-    return  h_out * (theta_sat - matrix_temp[0])
+    return h_out * (theta_sat - matrix_temp[0])
 
 
 def get_heat_flow_1(matrix_temp: np.ndarray, param: Parameters) -> float:
