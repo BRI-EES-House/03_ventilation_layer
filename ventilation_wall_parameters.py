@@ -167,10 +167,57 @@ def get_wall_status_data_frame() -> pd.DataFrame:
 
 
 def dump_csv_all_case_result():
-    # 総当たりのパラメータと計算結果を取得
-    df = pd.DataFrame(get_wall_status_data_frame())
-    # CSV出力
-    df.to_csv("wall_status_data_frame.csv")
+    # 総当たりのパラメータと計算結果を取得し、CSVに出力
+
+    # 詳細計算
+    print("Detailed Calculation")
+    df = pd.DataFrame(get_wall_status_data_by_detailed_calculation("detailed", "detailed"))
+    df.to_csv("wall_status_data_frame_detailed.csv")
+
+    # 放射熱伝達率の検証： 冬期条件の簡易計算
+    print("Simplified Calculation: h_rv_winter")
+    df = pd.DataFrame(get_wall_status_data_by_detailed_calculation(calc_mode_h_cv="detailed", calc_mode_h_rv="simplified_winter"))
+    df.to_csv("wall_status_data_frame_h_rv_simplified_winter.csv")
+
+    # 放射熱伝達率の検証： 夏期条件の簡易計算
+    print("Simplified Calculation: h_rv_summer")
+    df = pd.DataFrame(get_wall_status_data_by_detailed_calculation(calc_mode_h_cv="detailed", calc_mode_h_rv="simplified_summer"))
+    df.to_csv("wall_status_data_frame_h_rv_simplified_summer.csv")
+
+    # 放射熱伝達率の検証： 放射熱伝達率ゼロ
+    print("Simplified Calculation: h_rv_zero")
+    df = pd.DataFrame(get_wall_status_data_by_detailed_calculation(calc_mode_h_cv="detailed", calc_mode_h_rv="simplified_zero"))
+    df.to_csv("wall_status_data_frame_h_rv_simplified_zero.csv")
+
+    # 放射熱伝達率の検証：　通年の簡易計算
+    print("Simplified Calculation: h_rv_all_season")
+    df = pd.DataFrame(get_wall_status_data_by_detailed_calculation(calc_mode_h_cv="detailed", calc_mode_h_rv="simplified_all_season"))
+    df.to_csv("wall_status_data_frame_h_rv_simplified_all_season.csv")
+
+    # 対流熱伝達率の検証： 冬期条件の簡易計算
+    print("Simplified Calculation: h_cv_winter")
+    df = pd.DataFrame(get_wall_status_data_by_detailed_calculation(calc_mode_h_cv="simplified_winter", calc_mode_h_rv="detailed"))
+    df.to_csv("wall_status_data_frame_h_cv_simplified_winter.csv")
+
+    # 対流熱伝達率の検証： 夏期条件の簡易計算
+    print("Simplified Calculation: h_cv_summer")
+    df = pd.DataFrame(get_wall_status_data_by_detailed_calculation(calc_mode_h_cv="simplified_summer", calc_mode_h_rv="detailed"))
+    df.to_csv("wall_status_data_frame_h_cv_simplified_summer.csv")
+
+    # 対流熱伝達率の検証：　通年の簡易計算
+    print("Simplified Calculation: h_cv_all_season")
+    df = pd.DataFrame(get_wall_status_data_by_detailed_calculation(calc_mode_h_cv="simplified_all_season", calc_mode_h_rv="detailed"))
+    df.to_csv("wall_status_data_frame_h_cv_simplified_all_season.csv")
+
+    # 簡易版の行列式による計算
+    print("Simplified Calculation(simplified matrix)")
+    df = pd.DataFrame(get_wall_status_data_by_simplified_matrix())
+    df.to_csv("wall_status_data_frame_simplified_matrix.csv")
+
+    # 簡易式による計算
+    print("Simplified Calculation(simplified equation)")
+    df = pd.DataFrame(get_wall_status_data_by_simplified_equation())
+    df.to_csv("wall_status_data_frame_simplified_equation.csv")
 
 
 if __name__ == '__main__':
