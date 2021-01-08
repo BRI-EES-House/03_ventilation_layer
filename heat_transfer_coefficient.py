@@ -157,12 +157,24 @@ def convective_heat_transfer_coefficient_simplified_all_season(v_a: float) -> fl
     return 4.096 * v_a + 2.06
 
 
+def convective_heat_transfer_coefficient_detailed(v_a: float, theta_1: float, theta_2: float, angle: float, l_h: float, l_d: float) -> float:
+    """
+    対流熱伝達率[W/(m2・K)]の計算（詳細計算）
+
+    :param v_a:     通気層の平均風速, m/s
+    :param theta_1: 通気層に面する面1の表面温度, degC
+    :param theta_2: 通気層に面する面2の表面温度, degC
+    :param angle:   通気層の傾斜角, degree
+    :param l_h:     通気層の長さ, m
+    :param l_d:     通気層の厚さ, m
+    :return:        対流熱伝達率, W/(m2・K)
+    """
 
     theta_ave = (theta_1 + theta_2) / 2.0
 
     if theta_1 == theta_2:
         # 両表面の温度（theta_1とtheta_2）が同じ値のときはh_c = 0.0とする
-        h_c = 0.0
+        h_cv = 0.0
     else:
         # ヌセルト数を計算
         nusselt_number = get_nusselt_number(theta_1, theta_2, angle, l_h, l_d)
@@ -171,12 +183,9 @@ def convective_heat_transfer_coefficient_simplified_all_season(v_a: float) -> fl
         h_base = nusselt_number * get_lambda_air(theta_ave) / l_d
 
         # 通気層の対流熱伝達率の計算
-        if v_a > 0.0:
-            h_c = 2 * h_base + 4 * v_a
-        else:
-            h_c = h_base
+        h_cv = 2 * h_base + 4 * v_a
 
-    return h_c
+    return h_cv
 
 
 # ヌセルト数の計算
