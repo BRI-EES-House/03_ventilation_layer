@@ -230,3 +230,27 @@ def get_heat_flow_room_side_detailed(angle: float, C_2: float, h_cv: float, h_rv
     u_s_dash = get_u_s_dash(angle, C_2, h_cv, h_rv)
 
     return u_s_dash * (theta_as_e - theta_r)
+
+
+def get_heat_flow_room_side_by_vent_layer_heat_resistance(r_i: float, theta_2: float, theta_r: float) -> float:
+    """
+    室内側から通気層表面までの熱抵抗から室内側表面熱流[W/m2]を計算する
+
+    :param r_i:         室内側から通気層表面までの抵抗[(m2・K)/W]
+    :param theta_2:     通気層に面する面2（室内側）の表面温度[degC]
+    :param theta_r:     室内温度[degC]
+    :return:            室内側表面熱流[W/m2]
+    """
+    return 1.0/r_i * (theta_2 - theta_r)
+
+
+def get_heat_flow_room_side_by_vent_layer_heat_transfer_coeff(u_i: float, theta_as_ave: float, theta_r: float) -> float:
+    """
+    室内側から通気層までの熱貫流率から室内側表面熱流[W/m2]を計算する
+
+    :param u_i:             室内側から通気層までの熱貫流率[W/(m2・K)]
+    :param theta_as_ave:    通気層の平均温度[degC]
+    :param theta_r:         室内温度[degC]
+    :return:                室内側表面熱流[W/m2]
+    """
+    return u_i * (theta_as_ave - theta_r)
