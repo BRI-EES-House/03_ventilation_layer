@@ -32,6 +32,37 @@ def effective_emissivity_two_dimension(emissivity_1: float, emissivity_2: float,
 
 # 放射熱伝達率[W/(m2・K)]の計算
 def radiative_heat_transfer_coefficient(theta_1, theta_2, effective_emissivity):
+
+def radiative_heat_transfer_coefficient_simplified_winter(effective_emissivity: float) -> float:
+    """
+    放射熱伝達率[W/(m2・K)]の計算（簡易計算、冬期条件）
+
+    :param effective_emissivity: 有効放射率, -
+    :return:                     放射熱伝達率, W/(m2・K)
+    """
+    return 5.054 * effective_emissivity
+
+
+def radiative_heat_transfer_coefficient_simplified_summer(effective_emissivity: float) -> float:
+    """
+    放射熱伝達率[W/(m2・K)]の計算（簡易計算、夏期条件）
+
+    :param effective_emissivity: 有効放射率, -
+    :return:                     放射熱伝達率, W/(m2・K)
+    """
+    return 6.615 * effective_emissivity
+
+
+def radiative_heat_transfer_coefficient_simplified_all_season(effective_emissivity: float) -> float:
+    """
+    放射熱伝達率[W/(m2・K)]の計算（簡易計算、通年）
+
+    :param effective_emissivity: 有効放射率, -
+    :return:                     放射熱伝達率, W/(m2・K)
+    """
+    return 5.88 * effective_emissivity
+
+
     t_m = (theta_1 + get_abs_temp() + theta_2 + get_abs_temp()) / 2
     h_r = 4 * get_sgm() * effective_emissivity * (t_m ** 3)
     return h_r
