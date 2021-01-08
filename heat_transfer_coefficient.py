@@ -212,44 +212,41 @@ def get_nusselt_number(theta_1: float, theta_2: float, angle: float, l_h: float,
 
     # ヌセルト数の計算
     nusselt_number = 0
-    nu_ct = (1 + ((0.104 * rayleigh_number ** 0.293) / (1 + (6310 / rayleigh_number) ** 1.36)) ** 3) ** (1 / 3)
+    nu_ct = (1.0 + ((0.104 * rayleigh_number ** 0.293) / (1.0 + (6310.0 / rayleigh_number) ** 1.36)) ** 3) ** (1 / 3)
     nu_u1 = 0.242 * (rayleigh_number * l_d / l_h) ** 0.273
     nu_ut = 0.0605 * rayleigh_number ** (1 / 3)
 
     # 傾斜角が0°（水平）のとき
-    if angle == 0:
-        if rayleigh_number > 5830:
-            nusselt_number = 1.44 * (1 - 1708/rayleigh_number) + (rayleigh_number/5830) ** (1/3)
-        elif 1708 < rayleigh_number <= 5830:
-            nusselt_number = 1 + 1.44 * (1 - 1708/rayleigh_number)
-        elif rayleigh_number <= 1708:
-            nusselt_number = 1
+    if angle == 0.0:
+        if rayleigh_number > 5830.0:
+            nusselt_number = 1.44 * (1.0 - 1708.0/rayleigh_number) + (rayleigh_number/5830.0) ** (1/3)
+        elif 1708.0 < rayleigh_number <= 5830.0:
+            nusselt_number = 1.0 + 1.44 * (1.0 - 1708.0/rayleigh_number)
+        elif rayleigh_number <= 1708.0:
+            nusselt_number = 1.0
 
     # 傾斜角が90°（鉛直）のとき
-    elif angle == 90:
-        # nu_ct = (1 + ((0.104 * rayleigh_number ** 0.293) / (1 + (6310 / rayleigh_number) ** 1.36)) ** 3) ** (1 / 3)
-        # nu_u1 = 0.242 * (rayleigh_number * l_d / l_h) ** 0.273
-        # nu_ut = 0.0605 * rayleigh_number ** (1/3)
+    elif angle == 90.0:
         nusselt_number = max(nu_ct, nu_u1, nu_ut)
 
     # 傾斜角が0°<γ≤60°のとき
-    elif 0 < angle <= 60:
+    elif 0.0 < angle <= 60.0:
         buff = rayleigh_number * math.cos(math.radians(angle))
-        if buff >= 5830:
-            nusselt_number = 1.44 * (1 - 1708/buff) * (1 - (1708 * (math.sin(1.8 * math.radians(angle)) ** 1.6))/buff) + (buff/5830) ** (1/3)
-        elif 1708 <= buff < 5830:
-            nusselt_number = 1.44 * (1 - 1708 / buff) * (1 - (1708 * (math.sin(1.8 * math.radians(angle)) ** 1.6)) / buff)
-        elif buff < 1708:
+        if buff >= 5830.0:
+            nusselt_number = 1.44 * (1.0 - 1708.0/buff) * (1.0 - (1708.0 * (math.sin(1.8 * math.radians(angle)) ** 1.6))/buff) + (buff/5830.0) ** (1/3)
+        elif 1708.0 <= buff < 5830.0:
+            nusselt_number = 1.44 * (1.0 - 1708.0/buff) * (1.0 - (1708.0 * (math.sin(1.8 * math.radians(angle)) ** 1.6))/buff)
+        elif buff < 1708.0:
             nusselt_number = 1.0
 
     # 傾斜角が60°<γ<90°のとき
-    elif 60 < angle < 90:
-        buff_g = 0.5 / (1 + (rayleigh_number/3165) ** 20.6) ** 0.1
-        nu_60_1 = (1 + ((0.0936 * rayleigh_number ** 0.314) ** 7) / (1 + buff_g)) ** (1 / 7)
+    elif 60.0 < angle < 90.0:
+        buff_g = 0.5 / (1.0 + (rayleigh_number/3165.0) ** 20.6) ** 0.1
+        nu_60_1 = (1.0 + ((0.0936 * rayleigh_number ** 0.314) ** 7) / (1.0 + buff_g)) ** (1 / 7)
         nu_60_2 = (0.1044 + 0.1759 * l_d/l_h) * rayleigh_number ** 0.283
         nu_60 = max(nu_60_1, nu_60_2)
         nu_v = max(nu_ct, nu_u1, nu_ut)
-        nusselt_number = nu_60 * (90 - angle)/30 + nu_v * (angle - 60)/30
+        nusselt_number = nu_60 * (90.0 - angle)/30.0 + nu_v * (angle - 60.0)/30.0
        
     else:
         raise ValueError("指定された傾斜角は計算対象外です")
