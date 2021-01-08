@@ -103,6 +103,38 @@ def radiative_heat_transfer_coefficient_detailed(theta_1: float, theta_2: float,
 # 対流熱伝達率の計算[W/(m2・K)]
 def convective_heat_transfer_coefficient(v_a, theta_1, theta_2, angle, l_h, l_d):
 
+
+def convective_heat_transfer_coefficient_simplified_winter(v_a: float) -> float:
+    """
+    対流熱伝達率[W/(m2・K)]の計算（簡易計算、冬期条件）
+
+    :param v_a: 通気層の平均風速, m/s
+    :return:    対流熱伝達率, W/(m2・K)
+    """
+    return 4.077 * v_a + 2.302
+
+
+def convective_heat_transfer_coefficient_simplified_summer(v_a: float) -> float:
+    """
+    対流熱伝達率[W/(m2・K)]の計算（簡易計算、夏期条件）
+
+    :param v_a: 通気層の平均風速, m/s
+    :return:    対流熱伝達率, W/(m2・K)
+    """
+    return 4.113 * v_a + 1.844
+
+
+def convective_heat_transfer_coefficient_simplified_all_season(v_a: float) -> float:
+    """
+    対流熱伝達率[W/(m2・K)]の計算（簡易計算、通年）
+
+    :param v_a: 通気層の平均風速, m/s
+    :return:    対流熱伝達率, W/(m2・K)
+    """
+    return 4.096 * v_a + 2.06
+
+
+
     theta_ave = (theta_1 + theta_2) / 2.0
 
     if theta_1 == theta_2:
