@@ -126,7 +126,12 @@ def get_u_s_dash(angle: float, C_2: float, h_cv: float, h_rv: float) -> float:
     # 省エネ基準でのU値を計算
     u_s = 1 / (r_s_e + 1 / C_2 + r_s_r)
 
-    return 1/(1/u_s - r_s_e + 1/(h_rv + h_cv))
+    if abs(h_rv + h_cv) < 0.001:
+        u_s_dash = np.nan
+    else:
+        u_s_dash = 1.0 / (1.0/u_s - r_s_e + 1.0/(h_rv + h_cv))
+
+    return u_s_dash
 
 
 def get_theata_as_e(theta_as_ave: float, theta_1_surf: float, h_cv: float, h_rv: float) -> float:
