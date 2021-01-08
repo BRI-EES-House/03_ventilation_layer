@@ -3,7 +3,9 @@ import pandas as pd
 import numpy as np
 import global_number
 import ventilation_wall as vw
+import ventilation_wall_simplified as vws
 import envelope_performance_factors as epf
+import heat_transfer_coefficient as htc
 
 
 class Log:
@@ -35,7 +37,7 @@ def get_parameter_list() -> object:
     l_h = np.array([3.0, np.median([3.0, 12.0]), 12.0], dtype=float)                # 通気層の長さ, m
     l_w = np.array([0.05, np.median([0.05, 10.0]), 10.0], dtype=float)              # 通気層の幅, m
     l_d = np.array([0.05, np.median([0.05, 0.3]), 0.3], dtype=float)                # 通気層の厚さ, m
-    angle = np.array([0.0, np.median([0.0, 90.0]), 90.0], dtype=float)              # 通気層の傾斜角, °
+    angle = np.array([0.0, np.median([0.0, 90.0]), 90.0], dtype=float)              # 通気層の傾斜角, degree
     v_a = np.array([0.0, np.median([0.0, 1.0]), 1.0], dtype=float)                  # 通気層の平均風速, m/s
     l_s = [0.45]                                                                    # 通気胴縁または垂木の間隔, m
     emissivity_1 = [0.9]                                                            # 通気層に面する面1の放射率, -
