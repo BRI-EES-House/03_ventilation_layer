@@ -47,10 +47,12 @@ def get_parameter_list() -> object:
     return parameter_list
 
 
-def get_wall_status_data_frame() -> pd.DataFrame:
+def get_wall_status_data_by_detailed_calculation(calc_mode_h_cv: str, calc_mode_h_rv: str) -> pd.DataFrame:
     """
     通気層を有する壁体の総当たりパラメータを取得し、各ケースの計算結果を保有するDataFrameを作成する
-    :param なし
+
+    :param calc_mode_h_cv: 対流熱伝達率の計算モード
+    :param calc_mode_h_rv: 放射熱伝達率の計算モード
     :return: DataFrame
     """
 
@@ -70,6 +72,7 @@ def get_wall_status_data_frame() -> pd.DataFrame:
     theta_2_surf = []       # 通気層に面する面1の表面温度[℃]
     theta_in_surf = []      # 室内側表面温度[℃]
     theta_as_ave = []       # 通気層の平均温度[℃]
+    effective_emissivity = []    # 有効放射率[-]
     h_cv = []               # 通気層の対流熱伝達率[W/(m2・K)]
     h_rv = []               # 通気層の放射熱伝達率[W/(m2・K)]
     theta_as_e = []         # 通気層の等価温度[℃]
@@ -107,12 +110,13 @@ def get_wall_status_data_frame() -> pd.DataFrame:
                                    emissivity_2=row.emissivity_2))
 
             # 通気層の状態値を取得
-            status = vw.get_wall_status_values(parms, h_out, h_in)
+            status = vw.get_wall_status_values(parms, calc_mode_h_cv, calc_mode_h_rv, h_out, h_in)
             theta_out_surf.append(status.matrix_temp[0])
             theta_1_surf.append(status.matrix_temp[1])
             theta_2_surf.append(status.matrix_temp[2])
             theta_in_surf.append(status.matrix_temp[3])
             theta_as_ave.append(status.matrix_temp[4])
+            effective_emissivity.append(htc.effective_emissivity_parallel(emissivity_1=row.emissivity_1, emissivity_2=row.emissivity_2))
             h_cv.append(status.h_cv)
             h_rv.append(status.h_rv)
 
@@ -129,8 +133,9 @@ def get_wall_status_data_frame() -> pd.DataFrame:
             k_e.append(epf.get_k_e(theta_as_e_buf, row.theta_r, theta_sat_buf))
 
             # 室内側表面熱流を計算
-            q_room_side.append(epf.get_heat_flow_room_side(row.angle, row.C_2, status.h_cv, status.h_rv,
-                                                           theta_as_e_buf, row.theta_r))
+            r_i_buf = epf.get_r_i(C_2=row.C_2)
+            q_room_side.append(epf.get_heat_flow_room_side_by_vent_layer_heat_resistance(r_i=r_i_buf, theta_2=status.matrix_temp[2], theta_r=row.theta_r))
+            # q_room_side.append(epf.get_heat_flow_room_side_detailed(row.angle, row.C_2, status.h_cv, status.h_rv, theta_as_e_buf, row.theta_r))
 
             # 各層の熱収支収支を取得
             heat_balance_0.append(status.matrix_heat_balance[0])
@@ -150,6 +155,7 @@ def get_wall_status_data_frame() -> pd.DataFrame:
     df['theta_2_surf'] = theta_2_surf
     df['theta_in_surf'] = theta_in_surf
     df['theta_as_ave'] = theta_as_ave
+    df['effective_emissivity'] = effective_emissivity
     df['h_cv'] = h_cv
     df['h_rv'] = h_rv
     df['theta_as_e'] = theta_as_e
