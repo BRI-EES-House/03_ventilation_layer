@@ -2,15 +2,31 @@ import math
 from global_number import get_abs_temp, get_sgm, get_g, get_lambda_air, get_beta_air, get_mu_air, get_pr_air, get_c_air, get_rho_air
 
 
-# 有効放射率の計算（無限の平行面の場合）
-def effective_emissivity_parallel(emissivity_1, emissivity_2):
+def effective_emissivity_parallel(emissivity_1: float, emissivity_2: float) -> float:
+    """
+    有効放射率の計算（無限の平行面の場合）
+
+    :param emissivity_1:    面1の放射率, -
+    :param emissivity_2:    面2の放射率, -
+    :return:                有効放射率, -
+    """
+
     effective_emissivity = 1 / ((1 / emissivity_1) + (1 / emissivity_2) - 1)
     return effective_emissivity
 
 
-# 有効放射率の計算（二次元空間の場合）
-def effective_emissivity_two_dimension(emissivity_1, emissivity_2, l_d, l_s):
-    effective_emissivity = 1.0 / (1.0 / emissivity_1 + 1.0 / emissivity_2 - 2.0 + 1.0 / (1.0 / 2.0 * (1.0 + math.sqrt(1.0 + l_d ** 2.0 / l_s ** 2.0) - l_d / l_s)))
+def effective_emissivity_two_dimension(emissivity_1: float, emissivity_2: float, l_d: float, l_s: float) -> float:
+    """
+    有効放射率の計算（二次元空間の場合）
+
+    :param emissivity_1:    面1の放射率, -
+    :param emissivity_2:    面2の放射率, -
+    :param l_d:             通気層の厚さ, m
+    :param l_s:             通気胴縁または垂木の間隔, m
+    :return:                有効放射率, -
+    """
+    effective_emissivity = 1.0 / (1.0 / emissivity_1 + 1.0 / emissivity_2 - 2.0 + 1.0 /
+                                  (1.0 / 2.0 * (1.0 + math.sqrt(1.0 + l_d ** 2.0 / l_s ** 2.0) - l_d / l_s)))
     return effective_emissivity
 
 
@@ -46,7 +62,17 @@ def convective_heat_transfer_coefficient(v_a, theta_1, theta_2, angle, l_h, l_d)
 
 
 # ヌセルト数の計算
-def get_nusselt_number(theta_1, theta_2, angle, l_h, l_d):
+def get_nusselt_number(theta_1: float, theta_2: float, angle: float, l_h: float, l_d: float) -> float:
+    """
+    ヌセルト数の計算
+
+    :param theta_1:     通気層に面する面1の表面温度, degC
+    :param theta_2:     通気層に面する面2の表面温度, degC
+    :param angle:       通気層の傾斜角, degree
+    :param l_h:         通気層の長さ, m
+    :param l_d:         通気層の厚さ, m
+    :return:            ヌセルト数
+    """
 
     # 表面温度の平均値
     theta_ave = (theta_1 + theta_2) / 2.0
