@@ -36,7 +36,7 @@ class Parameters:
     # 通気層の厚さ, m
     l_d: float
 
-    # 通気層の傾斜角, °
+    # 通気層の傾斜角, degree
     angle: float
 
     # 通気層の平均風速, m/s
