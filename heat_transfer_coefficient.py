@@ -30,8 +30,31 @@ def effective_emissivity_two_dimension(emissivity_1: float, emissivity_2: float,
     return effective_emissivity
 
 
-# 放射熱伝達率[W/(m2・K)]の計算
-def radiative_heat_transfer_coefficient(theta_1, theta_2, effective_emissivity):
+def get_radiative_heat_transfer_coefficient(calc_mode: str, theta_1: float, theta_2: float, effective_emissivity: float) -> float:
+    """
+    計算モードに応じた放射熱伝達率を計算する
+
+    :param calc_mode:   計算モード
+    :param theta_1:     通気層に面する面1の表面温度, degC
+    :param theta_2:     通気層に面する面2の表面温度, degC
+    :param effective_emissivity: 有効放射率, -
+    :return:            放射熱伝達率, W/(m2・K)
+    """
+    if calc_mode == "detailed":
+        h_rv = radiative_heat_transfer_coefficient_detailed(theta_1, theta_2, effective_emissivity)
+    elif calc_mode == "simplified_winter":
+        h_rv = radiative_heat_transfer_coefficient_simplified_winter(effective_emissivity)
+    elif calc_mode == "simplified_summer":
+        h_rv = radiative_heat_transfer_coefficient_simplified_summer(effective_emissivity)
+    elif calc_mode == "simplified_all_season":
+        h_rv = radiative_heat_transfer_coefficient_simplified_all_season(effective_emissivity)
+    elif calc_mode == "simplified_zero":
+        h_rv = 0.0
+    else:
+        raise ValueError("指定された計算モードは対象外です")
+
+    return h_rv
+
 
 def radiative_heat_transfer_coefficient_simplified_winter(effective_emissivity: float) -> float:
     """
