@@ -63,9 +63,18 @@ def radiative_heat_transfer_coefficient_simplified_all_season(effective_emissivi
     return 5.88 * effective_emissivity
 
 
+def radiative_heat_transfer_coefficient_detailed(theta_1: float, theta_2: float, effective_emissivity: float) -> float:
+    """
+    放射熱伝達率[W/(m2・K)]の計算（詳細計算）
+
+    :param theta_1:     通気層に面する面1の表面温度, degC
+    :param theta_2:     通気層に面する面2の表面温度, degC
+    :param effective_emissivity: 有効放射率, -
+    :return:            放射熱伝達率, W/(m2・K)
+    """
     t_m = (theta_1 + get_abs_temp() + theta_2 + get_abs_temp()) / 2
-    h_r = 4 * get_sgm() * effective_emissivity * (t_m ** 3)
-    return h_r
+    h_rv = 4 * get_sgm() * effective_emissivity * (t_m ** 3)
+    return h_rv
 
 
 # 対流熱伝達率の計算[W/(m2・K)]
