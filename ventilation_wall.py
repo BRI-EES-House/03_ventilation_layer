@@ -241,8 +241,6 @@ def get_heat_flow_exhaust(matrix_temp: np.ndarray, param: Parameters, theta_as_i
     :param param:       計算条件パラメータ群
     :param theta_as_in: 通気層への流入温度=外気温度, degC
     :param h_cv:        通気層の対流熱伝達率, W/m2K
-    :param c_a:         空気の定圧比熱, J/(kg・K)
-    :param rho_a:       空気の密度, kg/m3
     :return:            通気層の排気熱量, W/m2
     """
 
@@ -281,7 +279,6 @@ def get_heat_flow_2(matrix_temp: np.ndarray, h_cv: float, h_rv: float) -> tuple:
     通気層熱伝達量の計算
 
     :param matrix_temp: 各部温度計算結果 (5,1), degC
-    :param param:       計算条件パラメータ群
     :param h_cv:        通気層対流熱伝達率, W/m2K
     :param h_rv:        通気層放射熱伝達率, W/m2K
     :return:            通気層熱伝達量, W/m2
