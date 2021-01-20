@@ -26,7 +26,7 @@ def calc_shase_handbook_method(tw: float, tf: float, d: float, direction: str) -
     空気調和・衛生工学便覧　第14班
     自然対流熱伝達率の計算
     :param tw: 表面温度[C]
-    :param tf: 竜体温度[C]
+    :param tf: 流体温度[C]
     :param d: 代表長さ[m]
     :param direction: 向き　'v':垂直、'u':上向き、'd':下向き
     :return: 熱伝達率, W/(m2 K)
@@ -67,7 +67,7 @@ def calc_kimura_method(tw: float, tf: float, d: float, direction: str) -> float:
     木村建一　建築設備基礎
     自然対流熱伝達率の計算
     :param tw: 表面温度[C]
-    :param tf: 竜体温度[C]
+    :param tf: 流体温度[C]
     :param d: 代表長さ[m]
     :param direction: 向き　'v':垂直、'u':上向き、'd':下向き
     :return: 熱伝達率, W/(m2 K)
