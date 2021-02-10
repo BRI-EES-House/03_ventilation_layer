@@ -116,3 +116,10 @@ def get_h_in() -> float:
         室内側総合熱伝達率, W/(m2・K)
     """
     return 9.0
+
+
+def get_surface_albedo() -> float:
+    """
+    :return: 地面の日射反射率（アルベド）, -
+    """
+    return 0.2
