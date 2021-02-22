@@ -121,13 +121,13 @@ def calc_ventilation_wall_surface_temperatures(angle: float, theta_e: float, j_s
     # 通気層からの排気熱量
     q_exhaust_flow = vw.get_heat_flow_exhaust(matrix_temp=status.matrix_temp, param=parm, theta_as_in=parm.theta_e, h_cv=status.h_cv)
 
-def add_ventilation_wall_surface_temperatures(target_df: pd.DataFrame) -> pd.DataFrame:
     # 室内表面熱流
     q_inner_flow = vw.get_heat_flow_4(matrix_temp=status.matrix_temp, param=parm, h_in=h_in)
 
     return status, q_outer_flow, q_exhaust_flow, q_inner_flow
 
 
+def add_ventilation_wall_temperatures_and_heat_flow(target_df: pd.DataFrame) -> pd.DataFrame:
     """
     通気層内の面1、面2の表面温度を計算し、DataFrameに追加して返す関数
 
