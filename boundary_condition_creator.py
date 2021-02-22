@@ -115,10 +115,19 @@ def calc_ventilation_wall_surface_temperatures(angle: float, theta_e: float, j_s
     # 通気層の状態値を取得
     status = vw.get_wall_status_values(parm, calc_mode_h_cv, calc_mode_h_rv, h_out, h_in)
 
-    return status.matrix_temp[1], status.matrix_temp[2]
+    # 屋外表面熱流
+    q_outer_flow = vw.get_heat_flow_0(matrix_temp=status.matrix_temp, param=parm, h_out=h_out)
+
+    # 通気層からの排気熱量
+    q_exhaust_flow = vw.get_heat_flow_exhaust(matrix_temp=status.matrix_temp, param=parm, theta_as_in=parm.theta_e, h_cv=status.h_cv)
+
+    # 室内表面熱流
+    q_inner_flow = vw.get_heat_flow_4(matrix_temp=status.matrix_temp, param=parm, h_in=h_in)
+
+    return status, q_outer_flow, q_exhaust_flow, q_inner_flow
 
 
-def add_ventilation_wall_surface_temperatures(target_df: pd.DataFrame) -> pd.DataFrame:
+def add_ventilation_wall_temperatures_and_heat_flow(target_df: pd.DataFrame) -> pd.DataFrame:
     """
     通気層内の面1、面2の表面温度を計算し、DataFrameに追加して返す関数
 
@@ -128,15 +137,27 @@ def add_ventilation_wall_surface_temperatures(target_df: pd.DataFrame) -> pd.Dat
 
     theta_1_surf = []
     theta_2_surf = []
+    theta_as_ave = []
+    q_outer_flow = []
+    q_exhaust_flow = []
+    q_inner_flow = []
 
     for row in target_df.itertuples():
-        theta_1_surf_buf, theta_2_surf_buf = calc_ventilation_wall_surface_temperatures(
+        status, buf_q_outer_flow, buf_q_exhaust_flow, buf_q_inner_flow = calc_ventilation_wall_surface_temperatures(
             angle=row.angle, theta_e=row.theta_e_ave, j_surf=row.j_surf_ave, season=row.season
         )
-        theta_1_surf.append(theta_1_surf_buf)
-        theta_2_surf.append(theta_2_surf_buf)
+        theta_1_surf.append(status.matrix_temp[1])
+        theta_2_surf.append(status.matrix_temp[2])
+        theta_as_ave.append(status.matrix_temp[4])
+        q_outer_flow.append(buf_q_outer_flow)
+        q_exhaust_flow.append(buf_q_exhaust_flow)
+        q_inner_flow.append(buf_q_inner_flow)
 
     target_df['theta_1_surf'] = theta_1_surf
     target_df['theta_2_surf'] = theta_2_surf
+    target_df['theta_as_ave'] = theta_as_ave
+    target_df['q_outer_flow'] = q_outer_flow
+    target_df['q_exhaust_flow'] = q_exhaust_flow
+    target_df['q_inner_flow'] = q_inner_flow
 
     return target_df
