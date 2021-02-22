@@ -137,15 +137,27 @@ def add_ventilation_wall_temperatures_and_heat_flow(target_df: pd.DataFrame) -> 
 
     theta_1_surf = []
     theta_2_surf = []
+    theta_as_ave = []
+    q_outer_flow = []
+    q_exhaust_flow = []
+    q_inner_flow = []
 
     for row in target_df.itertuples():
-        theta_1_surf_buf, theta_2_surf_buf = calc_ventilation_wall_surface_temperatures(
+        status, buf_q_outer_flow, buf_q_exhaust_flow, buf_q_inner_flow = calc_ventilation_wall_surface_temperatures(
             angle=row.angle, theta_e=row.theta_e_ave, j_surf=row.j_surf_ave, season=row.season
         )
-        theta_1_surf.append(theta_1_surf_buf)
-        theta_2_surf.append(theta_2_surf_buf)
+        theta_1_surf.append(status.matrix_temp[1])
+        theta_2_surf.append(status.matrix_temp[2])
+        theta_as_ave.append(status.matrix_temp[4])
+        q_outer_flow.append(buf_q_outer_flow)
+        q_exhaust_flow.append(buf_q_exhaust_flow)
+        q_inner_flow.append(buf_q_inner_flow)
 
     target_df['theta_1_surf'] = theta_1_surf
     target_df['theta_2_surf'] = theta_2_surf
+    target_df['theta_as_ave'] = theta_as_ave
+    target_df['q_outer_flow'] = q_outer_flow
+    target_df['q_exhaust_flow'] = q_exhaust_flow
+    target_df['q_inner_flow'] = q_inner_flow
 
     return target_df
