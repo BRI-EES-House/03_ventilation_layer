@@ -303,14 +303,21 @@ def get_wall_status_data_by_simplified_calculation_no_02() -> pd.DataFrame:
 
             # 対流熱伝達率、放射熱伝達率を計算
             effective_emissivity_buf = htc.effective_emissivity_parallel(emissivity_1=row.emissivity_1, emissivity_2=row.emissivity_2)
-            h_cv_buf = htc.convective_heat_transfer_coefficient_simplified_all_season(v_a=row.v_a)
-            h_rv_buf = htc.radiative_heat_transfer_coefficient_simplified_all_season(effective_emissivity=effective_emissivity_buf)
+            if parms.theta_r == 20.0:
+                h_cv_buf = htc.convective_heat_transfer_coefficient_simplified_winter(v_a=row.v_a)
+                h_rv_buf = htc.radiative_heat_transfer_coefficient_simplified_winter(
+                    effective_emissivity=effective_emissivity_buf)
+            else:
+                h_cv_buf = htc.convective_heat_transfer_coefficient_simplified_summer(v_a=row.v_a)
+                h_rv_buf = htc.radiative_heat_transfer_coefficient_simplified_summer(
+                    effective_emissivity=effective_emissivity_buf)
+
             effective_emissivity.append(effective_emissivity_buf)
             h_cv.append(h_cv_buf)
             h_rv.append(h_rv_buf)
 
             # 通気層平均温度を取得
-            theta_as_ave_buf, u_o_buf, u_i_buf = vws.get_vent_wall_temperature_by_simplified_equation(parm=parms, h_out=h_out)
+            theta_as_ave_buf, u_o_buf, u_i_buf = vws.get_vent_wall_temperature_by_simplified_calculation_no_02(parm=parms, h_out=h_out)
             theta_as_ave.append(theta_as_ave_buf)
 
             # 相当外気温度を計算
