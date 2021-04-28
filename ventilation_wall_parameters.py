@@ -541,6 +541,15 @@ def dump_csv_all_case_result():
     df = pd.DataFrame(get_wall_status_data_by_simplified_calculation_no_02())
     df.to_csv("wall_status_data_frame_simplified_calculation_no02.csv")
 
+    # 簡易計算法案No.3（通気層を有する壁体の修正熱貫流率、修正日射熱取得率から室内表面熱流を求める）による計算
+    print("Simplified Calculation No.3")
+    df = pd.DataFrame(get_wall_status_data_by_simplified_calculation_no_03())
+    df.to_csv("wall_status_data_frame_simplified_calculation_no03.csv")
+
+    # 簡易計算法案No.4（簡易計算法案No.3をさらに簡略化）による計算
+    print("Simplified Calculation No.4")
+    df = pd.DataFrame(get_wall_status_data_by_simplified_calculation_no_04())
+    df.to_csv("wall_status_data_frame_simplified_calculation_no04.csv")
 
 
 if __name__ == '__main__':
