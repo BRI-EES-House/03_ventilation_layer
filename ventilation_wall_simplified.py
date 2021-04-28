@@ -22,20 +22,23 @@ def get_vent_wall_temperature_by_simplified_calculation_no_01(parm: vw.Parameter
     matrix_coeff = np.zeros(shape=(3, 3))
     matrix_const = np.zeros(3)
 
-    # 対流熱伝達率の計算
-    h_cv = htc.convective_heat_transfer_coefficient_simplified_all_season(v_a=parm.v_a)
-
     # 有効放射率の計算
     effective_emissivity = htc.effective_emissivity_parallel(parm.emissivity_1, parm.emissivity_2)
 
-    # 放射熱伝達率の計算
-    h_rv = htc.radiative_heat_transfer_coefficient_simplified_all_season(effective_emissivity=effective_emissivity)
+    # 対流熱伝達率、放射熱伝達率の計算
+    if parm.theta_r == 20.0:
+        h_cv = htc.convective_heat_transfer_coefficient_simplified_winter(v_a=parm.v_a)
+        h_rv = htc.radiative_heat_transfer_coefficient_simplified_winter(
+            effective_emissivity=effective_emissivity)
+    else:
+        h_cv = htc.convective_heat_transfer_coefficient_simplified_summer(v_a=parm.v_a)
+        h_rv = htc.radiative_heat_transfer_coefficient_simplified_summer(
+            effective_emissivity=effective_emissivity)
 
     # 通気風量の計算
     v_vent = parm.v_a * parm.l_d * parm.l_w
 
     # 通気層の平均空気温度の計算用の値を設定
-    beta = 0.0
     epc_s = 0.0
     if parm.v_a > 0.0:
         beta = (2 * h_cv * parm.l_w) / (get_c_air(parm.theta_e) * get_rho_air(parm.theta_e) * v_vent)
