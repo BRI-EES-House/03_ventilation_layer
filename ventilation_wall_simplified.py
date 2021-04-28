@@ -122,6 +122,61 @@ def get_vent_wall_temperature_by_simplified_calculation_no_02(parm: vw.Parameter
     return theta_as_ave, u_o, u_i
 
 
+def get_vent_wall_performance_factor_by_simplified_calculation_no_03(parm: vw.Parameters, h_out: float):
+    """
+    簡易計算法案No.3：通気層を有する壁体の修正熱貫流率、修正日射熱取得率、室内表面熱流を求める関数
+
+    :param parm:    計算条件パラメータ群
+    :param h_out:   室外側総合熱伝達率[W/(m2・K)]
+    :return:        修正熱貫流率[W/(m2・K)], 修正日射熱取得率[-], 室内表面熱流[W/m2]
+    """
+
+    # 有効放射率の計算
+    effective_emissivity = htc.effective_emissivity_parallel(parm.emissivity_1, parm.emissivity_2)
+
+    # 対流熱伝達率、放射熱伝達率の計算
+    if parm.theta_r == 20.0:
+        h_cv = htc.convective_heat_transfer_coefficient_simplified_winter(v_a=parm.v_a)
+        h_rv = htc.radiative_heat_transfer_coefficient_simplified_winter(
+            effective_emissivity=effective_emissivity)
+    else:
+        h_cv = htc.convective_heat_transfer_coefficient_simplified_summer(v_a=parm.v_a)
+        h_rv = htc.radiative_heat_transfer_coefficient_simplified_summer(
+            effective_emissivity=effective_emissivity)
+
+    # 熱伝達率の計算
+    h_v = 2.0 * h_rv + h_cv
+
+    # 通気風量の計算
+    v_vent = parm.v_a * parm.l_d * parm.l_w
+
+    # 通気層の平均空気温度の計算用の値を設定
+    if parm.v_a > 0.0:
+        beta = (2 * h_cv * parm.l_w) / (get_c_air(parm.theta_e) * get_rho_air(parm.theta_e) * v_vent)
+        epc_s = 1.0 / parm.l_h * 1.0 / beta * (math.exp(-beta * parm.l_h) - 1.0)
+        epc_s_dash = - ((2.0 * h_cv) * epc_s) / (1.0 + epc_s)
+        h_v_dash = h_v + 1.0 / ((1.0 / epc_s_dash) + h_rv / (h_v * h_cv))
+    else:
+        h_v_dash = h_v + 1.0 / (h_rv / (h_v * h_cv))
+
+    # 熱抵抗を設定
+    u_o_s = 1.0 / epf.get_r_o(parm.C_1)
+    u_i_s = 1.0 / epf.get_r_i(parm.C_2)
+
+    # 修正U値を計算
+    buf_x = h_v_dash - (h_v ** 2 / (u_o_s + h_v))
+    u_dash = 1.0 / (1.0 / buf_x + 1.0 / h_v + 1.0 / u_i_s)
+
+    # 修正η値を計算
+    buf_y = h_v_dash - (h_v ** 2 / (u_i_s + h_v))
+    eta_dash = 1.0 / (1.0 / buf_y + 1.0 / h_v + 1.0 / u_o_s) * (parm.a_surf / h_out)
+
+    # 室内表面熱流を計算
+    q_room_side = u_dash * (parm.theta_e - parm.theta_r) + eta_dash * parm.J_surf
+
+    return h_cv, h_rv, u_dash, eta_dash, q_room_side
+
+
 # デバッグ用
 # parm_1: vw.Parameters = vw.Parameters(10, 20, 500, 1.0, 50.25, 2.55, 3.0, 0.05, 0.05, 45.0, 0.5, 0.45, 0.9, 0.9)
 # temps = get_vent_wall_temperature(parm_1, h_out=25.0, h_in=9.0)
