@@ -173,9 +173,9 @@ def get_wall_status_data_by_detailed_calculation(calc_mode_h_cv: str, calc_mode_
     return df
 
 
-def get_wall_status_data_by_simplified_matrix() -> pd.DataFrame:
+def get_wall_status_data_by_simplified_calculation_no_01() -> pd.DataFrame:
     """
-    通気層を有する壁体の総当たりパラメータを取得し、簡易版の行列式による計算結果を保有するDataFrameを作成する
+    通気層を有する壁体の総当たりパラメータを取得し、簡易計算法案No.1（簡易版の行列式）による計算結果を保有するDataFrameを作成する
 
     :param: なし
     :return: DataFrame
@@ -223,7 +223,7 @@ def get_wall_status_data_by_simplified_matrix() -> pd.DataFrame:
                                    emissivity_2=row.emissivity_2))
 
             # 通気層の状態値を取得
-            temps, h_cv_buf, h_rv_buf, r_i_buf = vws.get_vent_wall_temperature_by_simplified_matrix(parm=parms, h_out=h_out, h_in=h_in)
+            temps, h_cv_buf, h_rv_buf, r_i_buf = vws.get_vent_wall_temperature_by_simplified_calculation_no_01(parm=parms, h_out=h_out)
             theta_1_surf.append(temps[0])
             theta_2_surf.append(temps[2])
             theta_as_ave.append(temps[1])
@@ -251,9 +251,9 @@ def get_wall_status_data_by_simplified_matrix() -> pd.DataFrame:
     return df
 
 
-def get_wall_status_data_by_simplified_equation() -> pd.DataFrame:
+def get_wall_status_data_by_simplified_calculation_no_02() -> pd.DataFrame:
     """
-    通気層を有する壁体の総当たりパラメータを取得し、簡易式による計算結果を保有するDataFrameを作成する
+    通気層を有する壁体の総当たりパラメータを取得し、簡易計算法案No.2（簡易式）による計算結果を保有するDataFrameを作成する
 
     :param: なし
     :return: DataFrame
@@ -379,15 +379,16 @@ def dump_csv_all_case_result():
     df = pd.DataFrame(get_wall_status_data_by_detailed_calculation(calc_mode_h_cv="simplified_all_season", calc_mode_h_rv="detailed"))
     df.to_csv("wall_status_data_frame_h_cv_simplified_all_season.csv")
 
-    # 簡易版の行列式による計算
-    print("Simplified Calculation(simplified matrix)")
-    df = pd.DataFrame(get_wall_status_data_by_simplified_matrix())
-    df.to_csv("wall_status_data_frame_simplified_matrix.csv")
+    # 簡易計算法案No.1（簡易版の行列式）による計算
+    print("Simplified Calculation No.1")
+    df = pd.DataFrame(get_wall_status_data_by_simplified_calculation_no_01())
+    df.to_csv("wall_status_data_frame_simplified_calculation_no01.csv")
 
-    # 簡易式による計算
-    print("Simplified Calculation(simplified equation)")
-    df = pd.DataFrame(get_wall_status_data_by_simplified_equation())
-    df.to_csv("wall_status_data_frame_simplified_equation.csv")
+    # 簡易計算法案No.2（簡易式）による計算
+    print("Simplified Calculation No.2")
+    df = pd.DataFrame(get_wall_status_data_by_simplified_calculation_no_02())
+    df.to_csv("wall_status_data_frame_simplified_calculation_no02.csv")
+
 
 
 if __name__ == '__main__':
