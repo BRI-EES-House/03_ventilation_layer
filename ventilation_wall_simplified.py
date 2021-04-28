@@ -72,9 +72,9 @@ def get_vent_wall_temperature_by_simplified_calculation_no_01(parm: vw.Parameter
     return matrix_temp, h_cv, h_rv, R_i
 
 
-def get_vent_wall_temperature_by_simplified_equation(parm: vw.Parameters, h_out: float):
+def get_vent_wall_temperature_by_simplified_calculation_no_02(parm: vw.Parameters, h_out: float):
     """
-    簡易式により通気層の平均温度を求める関数
+    簡易計算法案No.2：簡易式により通気層の平均温度を求める関数
 
     :param parm:    計算条件パラメータ群
     :param h_out:   室外側総合熱伝達率[W/(m2・K)]
