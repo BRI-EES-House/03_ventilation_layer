@@ -6,13 +6,12 @@ import envelope_performance_factors as epf
 from global_number import get_c_air, get_rho_air
 
 
-def get_vent_wall_temperature_by_simplified_matrix(parm: vw.Parameters, h_out: float, h_in: float) -> np.zeros(3):
+def get_vent_wall_temperature_by_simplified_calculation_no_01(parm: vw.Parameters, h_out: float) -> np.zeros(3):
     """
-    簡易版の行列式により各部位の温度を求める関数
+    簡易計算法案No.1：簡易版の行列式により各部位の温度を求める関数
 
     :param parm:    計算条件パラメータ群
     :param h_out:   室外側総合熱伝達率[W/(m2・K)]
-    :param h_in:    室内側総合熱伝達率[W/(m2・K)]
     :return:        各部位の温度(3×1の行列)[degC], 対流熱伝達率[W/(m2・K)], 放射熱伝達率[W/(m2・K)], 室内側から通気層表面までの熱抵抗[(m2・K)/W]
     """
 
