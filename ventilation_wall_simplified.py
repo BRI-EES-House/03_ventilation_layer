@@ -80,17 +80,22 @@ def get_vent_wall_temperature_by_simplified_calculation_no_02(parm: vw.Parameter
     :param h_out:   室外側総合熱伝達率[W/(m2・K)]
     :return:        通気層の平均温度[degC], 室外側から通気層までの熱貫流率[W/(m2・K)], 室内側から通気層までの熱貫流率[W/(m2・K)]
     """
+
     # 相当外気温度を計算
     theta_sat = epf.get_theta_SAT(theta_e=parm.theta_e, a_surf=parm.a_surf, j_surf=parm.J_surf, h_out=h_out)
-
-    # 対流熱伝達率の計算
-    h_cv = htc.convective_heat_transfer_coefficient_simplified_all_season(v_a=parm.v_a)
 
     # 有効放射率の計算
     effective_emissivity = htc.effective_emissivity_parallel(parm.emissivity_1, parm.emissivity_2)
 
-    # 放射熱伝達率の計算
-    h_rv = htc.radiative_heat_transfer_coefficient_simplified_all_season(effective_emissivity=effective_emissivity)
+    # 対流熱伝達率、放射熱伝達率の計算
+    if parm.theta_r == 20.0:
+        h_cv = htc.convective_heat_transfer_coefficient_simplified_winter(v_a=parm.v_a)
+        h_rv = htc.radiative_heat_transfer_coefficient_simplified_winter(
+            effective_emissivity=effective_emissivity)
+    else:
+        h_cv = htc.convective_heat_transfer_coefficient_simplified_summer(v_a=parm.v_a)
+        h_rv = htc.radiative_heat_transfer_coefficient_simplified_summer(
+            effective_emissivity=effective_emissivity)
 
     # 室外側から通気層までの熱貫流率、室内側から通気層までの熱貫流率を計算
     u_o = epf.get_u_o(parm.C_1, h_cv, h_rv)
