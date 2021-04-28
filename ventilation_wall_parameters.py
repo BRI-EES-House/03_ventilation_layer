@@ -137,7 +137,6 @@ def get_wall_status_data_by_detailed_calculation(calc_mode_h_cv: str, calc_mode_
             # 室内側表面熱流を計算
             r_i_buf = epf.get_r_i(C_2=row.C_2)
             q_room_side.append(epf.get_heat_flow_room_side_by_vent_layer_heat_resistance(r_i=r_i_buf, theta_2=status.matrix_temp[2], theta_r=row.theta_r))
-            # q_room_side.append(epf.get_heat_flow_room_side_detailed(row.angle, row.C_2, status.h_cv, status.h_rv, theta_as_e_buf, row.theta_r))
 
             # 各層の熱収支収支を取得
             heat_balance_0.append(status.matrix_heat_balance[0])
@@ -189,7 +188,6 @@ def get_wall_status_data_by_simplified_matrix() -> pd.DataFrame:
 
     # 固定値の設定
     h_out = global_number.get_h_out()
-    h_in = global_number.get_h_in()
 
     # 計算結果格納用配列を用意
     theta_sat = []          # 相当外気温度[℃]
@@ -199,9 +197,7 @@ def get_wall_status_data_by_simplified_matrix() -> pd.DataFrame:
     effective_emissivity = []    # 有効放射率[-]
     h_cv = []               # 通気層の対流熱伝達率[W/(m2・K)]
     h_rv = []               # 通気層の放射熱伝達率[W/(m2・K)]
-    # theta_as_e = []         # 通気層の等価温度[℃]
     q_room_side = []        # 室内表面熱流[W/m2]
-    # k_e = []                # 通気層を有する壁体の相当熱貫流率を求めるための補正係数[-]
 
     # エラーログ出力用の設定
     log = Log()
@@ -235,16 +231,9 @@ def get_wall_status_data_by_simplified_matrix() -> pd.DataFrame:
             h_cv.append(h_cv_buf)
             h_rv.append(h_rv_buf)
 
-            # 通気層の等価温度を取得
-            # theta_as_e_buf = epf.get_theata_as_e(theta_as_ave=temps[1], theta_1_surf=temps[0], h_cv=h_cv_buf, h_rv=h_rv_buf)
-            # theta_as_e.append(theta_as_e_buf)
-
             # 相当外気温度を計算
-            theta_sat_buf = epf.get_theta_SAT(theta_e= row.theta_e, a_surf=row.a_surf, j_surf=row.j_surf, h_out=h_out)
+            theta_sat_buf = epf.get_theta_SAT(theta_e=row.theta_e, a_surf=row.a_surf, j_surf=row.j_surf, h_out=h_out)
             theta_sat.append(theta_sat_buf)
-
-            # 通気層を有する壁体の相当熱貫流率を求めるための補正係数を取得
-            # k_e.append(epf.get_k_e(theta_as_e_buf, row.theta_r, theta_sat_buf))
 
             # 室内側表面熱流を計算
             q_room_side.append(epf.get_heat_flow_room_side_by_vent_layer_heat_resistance(r_i=r_i_buf, theta_2=temps[2], theta_r=row.theta_r))
@@ -257,8 +246,6 @@ def get_wall_status_data_by_simplified_matrix() -> pd.DataFrame:
     df['effective_emissivity'] = effective_emissivity
     df['h_cv'] = h_cv
     df['h_rv'] = h_rv
-    # df['theta_as_e'] = theta_as_e
-    # df['k_e'] = k_e
     df['q_room_side'] = q_room_side
 
     return df
