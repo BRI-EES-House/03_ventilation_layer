@@ -168,8 +168,13 @@ def get_vent_wall_performance_factor_by_simplified_calculation_no_03(parm: vw.Pa
     u_dash = 1.0 / (1.0 / buf_x + 1.0 / h_v + 1.0 / u_i_s)
 
     # 修正η値を計算
-    buf_y = h_v_dash - (h_v ** 2 / (u_i_s + h_v))
-    eta_dash = 1.0 / (1.0 / buf_y + 1.0 / h_v + 1.0 / u_o_s) * (parm.a_surf / h_out)
+    r_l = 1.0 / u_o_s + 1.0 / h_v
+    r_r1 = 1.0 / u_i_s + 1.0 / h_v
+    if parm.v_a > 0.0:
+        r_r2 = 1.0 / epc_s_dash + h_rv / (h_v * h_cv)
+        eta_dash = r_r2 / (r_l * r_r1 + r_l * r_r2 + r_r1 * r_r2) * (parm.a_surf / h_out)
+    else:
+        eta_dash = 1.0 / (r_l + r_r1) * (parm.a_surf / h_out)
 
     # 室内表面熱流を計算
     q_room_side = u_dash * (parm.theta_e - parm.theta_r) + eta_dash * parm.J_surf
