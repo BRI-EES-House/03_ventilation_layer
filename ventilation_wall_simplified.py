@@ -150,14 +150,14 @@ def get_vent_wall_performance_factor_by_simplified_calculation_no_03(parm: vw.Pa
     # 通気風量の計算
     v_vent = parm.v_a * parm.l_d * parm.l_w
 
-    # 通気層の平均空気温度の計算用の値を設定
+    # 通気層の熱抵抗の値を設定
     if parm.v_a > 0.0:
         beta = (2 * h_cv * parm.l_w) / (get_c_air(parm.theta_e) * get_rho_air(parm.theta_e) * v_vent)
         epc_s = 1.0 / parm.l_h * 1.0 / beta * (math.exp(-beta * parm.l_h) - 1.0)
         epc_s_dash = - ((2.0 * h_cv) * epc_s) / (1.0 + epc_s)
         h_v_dash = h_v + 1.0 / ((1.0 / epc_s_dash) + h_rv / (h_v * h_cv))
     else:
-        h_v_dash = h_v + 1.0 / (h_rv / (h_v * h_cv))
+        h_v_dash = h_v
 
     # 熱抵抗を設定
     u_o_s = 1.0 / epf.get_r_o(parm.C_1)
