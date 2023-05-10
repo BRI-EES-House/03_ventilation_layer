@@ -273,3 +273,20 @@ def _get_n_u(theta_1: float, theta_2: float, angle: float, l_h: float, l_d: floa
         raise ValueError("指定された傾斜角は計算対象外です")
 
     return nusselt_number
+
+
+def get_h_cv_Jurges(v_a: float) -> float:
+    """Get convective heat transfer coefficient base on Jurges equation.
+
+    Args:
+        v_a: air speed, m/s
+
+    Returns:
+        forced convective heat transfer coefficient, W/m2K
+    """
+
+    if v_a <= 4.9:
+        return 5.6 + 3.9 * v_a
+    else:
+        return 7.2 * v_a**0.78
+
