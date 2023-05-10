@@ -2,6 +2,7 @@ import math
 from ventilation_layer.global_number import get_abs_temp, get_sgm, get_g, get_lambda_air, get_beta_air, get_mu_air, get_pr_air, get_c_air, get_rho_air
 from ventilation_layer import global_number as gn
 
+
 def effective_emissivity_parallel(emissivity_1: float, emissivity_2: float) -> float:
     """
     有効放射率の計算（無限の平行面の場合）
@@ -114,7 +115,7 @@ def get_convective_heat_transfer_coefficient(calc_mode: str, v_a: float, theta_1
     :return:            対流熱伝達率, W/(m2・K)
     """
     if calc_mode == "detailed":
-        h_cv = convective_heat_transfer_coefficient_detailed(v_a, theta_1, theta_2, angle, l_h, l_d)
+        h_cv = get_h_cv_detailed(v_a, theta_1, theta_2, angle, l_h, l_d)
     elif calc_mode == "simplified_winter":
         h_cv = convective_heat_transfer_coefficient_simplified_winter(v_a)
     elif calc_mode == "simplified_summer":
@@ -157,7 +158,7 @@ def convective_heat_transfer_coefficient_simplified_all_season(v_a: float) -> fl
     return 4.096 * v_a + 2.06
 
 
-def convective_heat_transfer_coefficient_detailed(v_a: float, theta_1: float, theta_2: float, angle: float, l_h: float, l_d: float) -> float:
+def get_h_cv_detailed(v_a: float, theta_1: float, theta_2: float, angle: float, l_h: float, l_d: float) -> float:
     """
     対流熱伝達率[W/(m2・K)]の計算（詳細計算）
 
