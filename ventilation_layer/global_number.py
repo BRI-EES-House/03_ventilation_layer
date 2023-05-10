@@ -23,7 +23,7 @@ def get_rho_air(t: float) -> float:
 
 def get_g() -> float:
     """
-    
+
     Returns:
         重力加速度, m/s**2
     """
@@ -33,9 +33,13 @@ def get_g() -> float:
 
 def get_lambda_air(t: float) -> float:
     """
+
+    Args:
+        空気の温度, degrees
     Returns:
         空気の熱伝導率, W/(m・K)
     """
+    
     return 0.0241 + 7.7e-5 * t
 
 
