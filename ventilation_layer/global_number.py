@@ -122,9 +122,11 @@ def get_gr_air(tw: float, tf: float, d: float) -> float:
 
 def get_sgm() -> float:
     """
+
     Returns:
         ステファンボルツマン定数
     """
+    
     return 5.67e-8
 
 
