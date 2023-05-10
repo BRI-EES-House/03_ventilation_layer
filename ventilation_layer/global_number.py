@@ -51,15 +51,19 @@ def get_beta_air(t: float) -> float:
     Returns:
         空気の体膨張率, 1/K
     """
-    
+
     return 1.0 / (t + get_abs_temp())
 
 
 def get_mu_air(t: float) -> float:
     """
+
+    Args:
+        空気の温度, degrees
     Returns:
         空気の粘性率, Pa・s
     """
+
     return (0.0074237 / (t + 390.15)) * ((t + get_abs_temp()) / 293.15) ** 1.5
 
 
