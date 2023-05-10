@@ -71,19 +71,23 @@ def get_new_air(t: float) -> float:
     """
 
     Args:
-        t: 空気温度
+        t: 空気温度, degrees
     Returns:
         空気の動粘性係数, m2/s
     """
-    
+
     return get_mu_air(t) / get_rho_air(t)
 
 
 def get_a_air(t: float) -> float:
     """
-    :param t: 空気温度
-    :return: 空気の熱拡散率
+
+    Args:
+        t: 空気温度, degrees
+    Returns
+        空気の熱拡散率, m2/s
     """
+
     return get_lambda_air(t) / get_c_air() / get_rho_air(t)
 
 
