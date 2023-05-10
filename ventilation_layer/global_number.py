@@ -1,6 +1,7 @@
 
 def get_c_air() -> float:
     """
+
     Returns:
         空気の定圧比熱, J/(kg・K)
     """
@@ -10,6 +11,9 @@ def get_c_air() -> float:
 
 def get_rho_air(t: float) -> float:
     """
+
+    Args:
+        空気の温度, degrees
     Returns:
         空気の密度, kg/m3
     """
@@ -19,6 +23,7 @@ def get_rho_air(t: float) -> float:
 
 def get_g() -> float:
     """
+    
     Returns:
         重力加速度, m/s**2
     """
