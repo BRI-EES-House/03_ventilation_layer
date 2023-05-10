@@ -193,54 +193,56 @@ def _get_h_cv_detailed(v_a: float, theta_1: float, theta_2: float, angle: float,
         # 両表面の温度（theta_1とtheta_2）が同じ値のときはh_c = 0.0とする
         h_cv = 0.0
     else:
+        # 風速係数, (W/s)(m3 K)
+        c_v = 4
+
         # ヌセルト数を計算
-        nusselt_number = get_nusselt_number(theta_1, theta_2, angle, l_h, l_d)
+        nusselt_number = _get_n_u(theta_1, theta_2, angle, l_h, l_d)
 
         # 密閉空気層の自然対流熱伝達率を計算
-        h_base = nusselt_number * get_lambda_air(theta_ave) / l_d
+        h_base = nusselt_number * gn.get_lambda_air(theta_ave) / l_d
 
         # 通気層の対流熱伝達率の計算
-        h_cv = 2 * h_base + 4 * v_a
+        h_cv = 2 * h_base + c_v * v_a
 
     return h_cv
 
 
-# ヌセルト数の計算
-def get_nusselt_number(theta_1: float, theta_2: float, angle: float, l_h: float, l_d: float) -> float:
-    """
-    ヌセルト数の計算
+def _get_n_u(theta_1: float, theta_2: float, angle: float, l_h: float, l_d: float) -> float:
+    """ヌセルト数の計算
 
-    :param theta_1:     通気層に面する面1の表面温度, degC
-    :param theta_2:     通気層に面する面2の表面温度, degC
-    :param angle:       通気層の傾斜角, degree
-    :param l_h:         通気層の長さ, m
-    :param l_d:         通気層の厚さ, m
-    :return:            ヌセルト数
+    Args:
+        theta_1: 通気層に面する面1の表面温度, degrees
+        theta_2: 通気層に面する面2の表面温度, degrees
+        angle: 通気層の傾斜角, degrees
+        l_h: 通気層の長さ, m
+        l_d: 通気層の厚さ, m
+    Returns:
+        ヌセルト数
     """
 
     # 表面温度の平均値
     theta_ave = (theta_1 + theta_2) / 2.0
 
-    # プラントル数の計算
-    pr = get_pr_air(theta_ave)
-
     # レーリー数の計算
-    rayleigh_number = (get_g() * get_beta_air(theta_ave) * abs(theta_1 - theta_2) * (l_d ** 3) * (get_rho_air(theta_ave) ** 2) * get_c_air()) / (get_mu_air(theta_ave) * get_lambda_air(theta_ave))
+    r_a = (gn.get_g() * gn.get_beta_air(theta_ave) * abs(theta_1 - theta_2) * (l_d ** 3) * (gn.get_rho_air(theta_ave) ** 2) * gn.get_c_air()) / (gn.get_mu_air(theta_ave) * gn.get_lambda_air(theta_ave))
 
     # ヌセルト数の計算
     nusselt_number = 0
-    nu_ct = (1.0 + ((0.104 * rayleigh_number ** 0.293) / (1.0 + (6310.0 / rayleigh_number) ** 1.36)) ** 3) ** (1 / 3)
-    nu_u1 = 0.242 * (rayleigh_number * l_d / l_h) ** 0.273
-    nu_ut = 0.0605 * rayleigh_number ** (1 / 3)
+    nu_ct = (1.0 + ((0.104 * r_a ** 0.293) / (1.0 + (6310.0 / r_a) ** 1.36)) ** 3) ** (1 / 3)
+    nu_u1 = 0.242 * (r_a * l_d / l_h) ** 0.273
+    nu_ut = 0.0605 * r_a ** (1 / 3)
 
     # 傾斜角が0°（水平）のとき
     if angle == 0.0:
-        if rayleigh_number > 5830.0:
-            nusselt_number = 1.44 * (1.0 - 1708.0/rayleigh_number) + (rayleigh_number/5830.0) ** (1/3)
-        elif 1708.0 < rayleigh_number <= 5830.0:
-            nusselt_number = 1.0 + 1.44 * (1.0 - 1708.0/rayleigh_number)
-        elif rayleigh_number <= 1708.0:
+        if r_a > 5830.0:
+            nusselt_number = 1.44 * (1.0 - 1708.0/r_a) + (r_a/5830.0) ** (1/3)
+        elif 1708.0 < r_a <= 5830.0:
+            nusselt_number = 1.0 + 1.44 * (1.0 - 1708.0/r_a)
+        elif r_a <= 1708.0:
             nusselt_number = 1.0
+        else:
+            raise Exception()
 
     # 傾斜角が90°（鉛直）のとき
     elif angle == 90.0:
@@ -248,19 +250,21 @@ def get_nusselt_number(theta_1: float, theta_2: float, angle: float, l_h: float,
 
     # 傾斜角が0°<γ≤60°のとき
     elif 0.0 < angle <= 60.0:
-        buff = rayleigh_number * math.cos(math.radians(angle))
+        buff = r_a * math.cos(math.radians(angle))
         if buff >= 5830.0:
             nusselt_number = 1.44 * (1.0 - 1708.0/buff) * (1.0 - (1708.0 * (math.sin(1.8 * math.radians(angle)) ** 1.6))/buff) + (buff/5830.0) ** (1/3)
         elif 1708.0 <= buff < 5830.0:
             nusselt_number = 1.44 * (1.0 - 1708.0/buff) * (1.0 - (1708.0 * (math.sin(1.8 * math.radians(angle)) ** 1.6))/buff)
         elif buff < 1708.0:
             nusselt_number = 1.0
+        else:
+            raise Exception()
 
     # 傾斜角が60°<γ<90°のとき
     elif 60.0 < angle < 90.0:
-        buff_g = 0.5 / (1.0 + (rayleigh_number/3165.0) ** 20.6) ** 0.1
-        nu_60_1 = (1.0 + ((0.0936 * rayleigh_number ** 0.314) ** 7) / (1.0 + buff_g)) ** (1 / 7)
-        nu_60_2 = (0.1044 + 0.1759 * l_d/l_h) * rayleigh_number ** 0.283
+        buff_g = 0.5 / (1.0 + (r_a/3165.0) ** 20.6) ** 0.1
+        nu_60_1 = (1.0 + ((0.0936 * r_a ** 0.314) ** 7) / (1.0 + buff_g)) ** (1 / 7)
+        nu_60_2 = (0.1044 + 0.1759 * l_d/l_h) * r_a ** 0.283
         nu_60 = max(nu_60_1, nu_60_2)
         nu_v = max(nu_ct, nu_u1, nu_ut)
         nusselt_number = nu_60 * (90.0 - angle)/30.0 + nu_v * (angle - 60.0)/30.0
