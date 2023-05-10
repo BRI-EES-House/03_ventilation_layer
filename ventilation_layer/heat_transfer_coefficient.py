@@ -1,4 +1,6 @@
 import math
+from typing import Optional
+
 from ventilation_layer.global_number import get_abs_temp, get_sgm, get_g, get_lambda_air, get_beta_air, get_mu_air, get_pr_air, get_c_air, get_rho_air
 from ventilation_layer import global_number as gn
 
@@ -101,74 +103,88 @@ def radiative_heat_transfer_coefficient_detailed(theta_1: float, theta_2: float,
     return h_rv
 
 
-def get_h_cv(calc_mode: str, v_a: float, theta_1: float, theta_2: float, angle: float, l_h: float, l_d: float) -> float:
-    """
-    計算モードに応じた対流熱伝達率を計算する
+def get_h_cv(
+        calc_mode: str,
+        v_a: float,
+        theta_1: Optional[float] = None,
+        theta_2: Optional[float] = None,
+        angle: Optional[float] = None,
+        l_h: Optional[float] = None,
+        l_d: Optional[float] = None
+    ) -> float:
+    """計算モードに応じた対流熱伝達率を計算する
 
-    :param calc_mode:   計算モード
-    :param v_a:         通気層の平均風速, m/s
-    :param theta_1:     通気層に面する面1の表面温度, degC
-    :param theta_2:     通気層に面する面2の表面温度, degC
-    :param angle:       通気層の傾斜角, degree
-    :param l_h:         通気層の長さ, m
-    :param l_d:         通気層の厚さ, m
-    :return:            対流熱伝達率, W/(m2・K)
+    Args:
+        calc_mode: 計算モード
+        v_a: 通気層の平均風速, m/s
+        theta_1: 通気層に面する面1の表面温度, degrees
+        theta_2: 通気層に面する面2の表面温度, degrees
+        angle: 通気層の傾斜角, degrees
+        l_h: 通気層の長さ, m
+        l_d: 通気層の厚さ, m
+    Returns:
+        対流熱伝達率, W/(m2・K)
     """
     if calc_mode == "detailed":
-        h_cv = _get_h_cv_detailed(v_a, theta_1, theta_2, angle, l_h, l_d)
+        return _get_h_cv_detailed(v_a, theta_1, theta_2, angle, l_h, l_d)
     elif calc_mode == "simplified_winter":
-        h_cv = convective_heat_transfer_coefficient_simplified_winter(v_a)
+        return _get_h_cv_simplified_winter(v_a)
     elif calc_mode == "simplified_summer":
-        h_cv = convective_heat_transfer_coefficient_simplified_summer(v_a)
+        return _get_h_cv_simplified_summer(v_a)
     elif calc_mode == "simplified_all_season":
-        h_cv = convective_heat_transfer_coefficient_simplified_all_season(v_a)
+        return _get_h_cv_simplified_all_season(v_a)
     else:
         raise ValueError("指定された計算モードは対象外です")
 
-    return h_cv
 
+def _get_h_cv_simplified_winter(v_a: float) -> float:
+    """対流熱伝達率[W/(m2・K)]の計算（簡易計算、冬期条件）
 
-def convective_heat_transfer_coefficient_simplified_winter(v_a: float) -> float:
+    Args:
+        v_a: 通気層の平均風速, m/s
+    Returns:
+        対流熱伝達率, W/(m2・K)
     """
-    対流熱伝達率[W/(m2・K)]の計算（簡易計算、冬期条件）
 
-    :param v_a: 通気層の平均風速, m/s
-    :return:    対流熱伝達率, W/(m2・K)
-    """
     return 4.077 * v_a + 2.302
 
 
-def convective_heat_transfer_coefficient_simplified_summer(v_a: float) -> float:
-    """
-    対流熱伝達率[W/(m2・K)]の計算（簡易計算、夏期条件）
+def _get_h_cv_simplified_summer(v_a: float) -> float:
+    """対流熱伝達率[W/(m2・K)]の計算（簡易計算、夏期条件）
 
-    :param v_a: 通気層の平均風速, m/s
-    :return:    対流熱伝達率, W/(m2・K)
+    Args:
+        v_a: 通気層の平均風速, m/s
+    Returns:
+        対流熱伝達率, W/(m2・K)
     """
+
     return 4.113 * v_a + 1.844
 
 
-def convective_heat_transfer_coefficient_simplified_all_season(v_a: float) -> float:
-    """
-    対流熱伝達率[W/(m2・K)]の計算（簡易計算、通年）
+def _get_h_cv_simplified_all_season(v_a: float) -> float:
+    """対流熱伝達率[W/(m2・K)]の計算（簡易計算、通年）
 
-    :param v_a: 通気層の平均風速, m/s
-    :return:    対流熱伝達率, W/(m2・K)
+    Args:
+        v_a: 通気層の平均風速, m/s
+    Returns:
+        対流熱伝達率, W/(m2・K)
     """
+
     return 4.096 * v_a + 2.06
 
 
 def _get_h_cv_detailed(v_a: float, theta_1: float, theta_2: float, angle: float, l_h: float, l_d: float) -> float:
-    """
-    対流熱伝達率[W/(m2・K)]の計算（詳細計算）
+    """対流熱伝達率[W/(m2・K)]の計算（詳細計算）
 
-    :param v_a:     通気層の平均風速, m/s
-    :param theta_1: 通気層に面する面1の表面温度, degC
-    :param theta_2: 通気層に面する面2の表面温度, degC
-    :param angle:   通気層の傾斜角, degree
-    :param l_h:     通気層の長さ, m
-    :param l_d:     通気層の厚さ, m
-    :return:        対流熱伝達率, W/(m2・K)
+    Args:
+        v_a: 通気層の平均風速, m/s
+        theta_1: 通気層に面する面1の表面温度, degC
+        theta_2: 通気層に面する面2の表面温度, degC
+        angle: 通気層の傾斜角, degree
+        l_h: 通気層の長さ, m
+        l_d: 通気層の厚さ, m
+    Returns
+        対流熱伝達率, W/(m2・K)
     """
 
     theta_ave = (theta_1 + theta_2) / 2.0

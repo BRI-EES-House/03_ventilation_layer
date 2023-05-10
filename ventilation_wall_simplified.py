@@ -27,11 +27,11 @@ def get_vent_wall_temperature_by_simplified_calculation_no_01(parm: vw.Parameter
 
     # 対流熱伝達率、放射熱伝達率の計算
     if parm.theta_r == 20.0:
-        h_cv = htc.convective_heat_transfer_coefficient_simplified_winter(v_a=parm.v_a)
+        h_cv = htc.get_h_cv(calc_mode="simplified_winter", v_a=parm.v_a)
         h_rv = htc.radiative_heat_transfer_coefficient_simplified_winter(
             effective_emissivity=effective_emissivity)
     else:
-        h_cv = htc.convective_heat_transfer_coefficient_simplified_summer(v_a=parm.v_a)
+        h_cv = htc.get_h_cv(calc_mode="simplified_winter", v_a=parm.v_a)
         h_rv = htc.radiative_heat_transfer_coefficient_simplified_summer(
             effective_emissivity=effective_emissivity)
 
@@ -89,11 +89,11 @@ def get_vent_wall_temperature_by_simplified_calculation_no_02(parm: vw.Parameter
 
     # 対流熱伝達率、放射熱伝達率の計算
     if parm.theta_r == 20.0:
-        h_cv = htc.convective_heat_transfer_coefficient_simplified_winter(v_a=parm.v_a)
+        h_cv = htc.get_h_cv(calc_mode="simplified_winter", v_a=parm.v_a)
         h_rv = htc.radiative_heat_transfer_coefficient_simplified_winter(
             effective_emissivity=effective_emissivity)
     else:
-        h_cv = htc.convective_heat_transfer_coefficient_simplified_summer(v_a=parm.v_a)
+        h_cv = htc.get_h_cv(calc_mode="simplified_winter", v_a=parm.v_a)
         h_rv = htc.radiative_heat_transfer_coefficient_simplified_summer(
             effective_emissivity=effective_emissivity)
 
@@ -136,11 +136,11 @@ def get_vent_wall_performance_factor_by_simplified_calculation_no_03(parm: vw.Pa
 
     # 対流熱伝達率、放射熱伝達率の計算
     if parm.theta_r == 20.0:
-        h_cv = htc.convective_heat_transfer_coefficient_simplified_winter(v_a=parm.v_a)
+        h_cv = htc.get_h_cv(calc_mode="simplified_winter", v_a=parm.v_a)
         h_rv = htc.radiative_heat_transfer_coefficient_simplified_winter(
             effective_emissivity=effective_emissivity)
     else:
-        h_cv = htc.convective_heat_transfer_coefficient_simplified_summer(v_a=parm.v_a)
+        h_cv = htc.get_h_cv(calc_mode="simplified_winter", v_a=parm.v_a)
         h_rv = htc.radiative_heat_transfer_coefficient_simplified_summer(
             effective_emissivity=effective_emissivity)
 
@@ -196,11 +196,11 @@ def get_vent_wall_performance_factor_by_simplified_calculation_no_04(parm: vw.Pa
 
     # 対流熱伝達率、放射熱伝達率の計算
     if parm.theta_r == 20.0:
-        h_cv = htc.convective_heat_transfer_coefficient_simplified_winter(v_a=parm.v_a)
+        h_cv = htc.get_h_cv(calc_mode="simplified_winter", v_a=parm.v_a)
         h_rv = htc.radiative_heat_transfer_coefficient_simplified_winter(
             effective_emissivity=effective_emissivity)
     else:
-        h_cv = htc.convective_heat_transfer_coefficient_simplified_summer(v_a=parm.v_a)
+        h_cv = htc.get_h_cv(calc_mode="simplified_winter", v_a=parm.v_a)
         h_rv = htc.radiative_heat_transfer_coefficient_simplified_summer(
             effective_emissivity=effective_emissivity)
 

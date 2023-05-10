@@ -304,11 +304,11 @@ def get_wall_status_data_by_simplified_calculation_no_02() -> pd.DataFrame:
             # 対流熱伝達率、放射熱伝達率を計算
             effective_emissivity_buf = htc.effective_emissivity_parallel(emissivity_1=row.emissivity_1, emissivity_2=row.emissivity_2)
             if parms.theta_r == 20.0:
-                h_cv_buf = htc.convective_heat_transfer_coefficient_simplified_winter(v_a=row.v_a)
+                h_cv_buf = htc.get_h_cv(calc_mode="simplified_winter", v_a=row.v_a)
                 h_rv_buf = htc.radiative_heat_transfer_coefficient_simplified_winter(
                     effective_emissivity=effective_emissivity_buf)
             else:
-                h_cv_buf = htc.convective_heat_transfer_coefficient_simplified_summer(v_a=row.v_a)
+                h_cv_buf = htc.get_h_cv(calc_mode="simplified_summer", v_a=row.v_a)
                 h_rv_buf = htc.radiative_heat_transfer_coefficient_simplified_summer(
                     effective_emissivity=effective_emissivity_buf)
 
