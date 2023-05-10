@@ -162,6 +162,9 @@ def get_h_in() -> float:
 
 def get_surface_albedo() -> float:
     """
-    :return: 地面の日射反射率（アルベド）, -
+
+    Returns:
+        地面の日射反射率（アルベド）, -
     """
+    
     return 0.2
