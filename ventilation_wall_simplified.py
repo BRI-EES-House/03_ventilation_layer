@@ -23,17 +23,15 @@ def get_vent_wall_temperature_by_simplified_calculation_no_01(parm: vw.Parameter
     matrix_const = np.zeros(3)
 
     # 有効放射率の計算
-    effective_emissivity = htc.effective_emissivity_parallel(parm.emissivity_1, parm.emissivity_2)
+    effective_emissivity = htc.get_e(parm.emissivity_1, parm.emissivity_2)
 
     # 対流熱伝達率、放射熱伝達率の計算
     if parm.theta_r == 20.0:
         h_cv = htc.get_h_cv(calc_mode="simplified_winter", v_a=parm.v_a)
-        h_rv = htc.radiative_heat_transfer_coefficient_simplified_winter(
-            effective_emissivity=effective_emissivity)
+        h_rv = htc.get_h_rv(calc_mode="simplified_winter", eps_eff=effective_emissivity)
     else:
         h_cv = htc.get_h_cv(calc_mode="simplified_winter", v_a=parm.v_a)
-        h_rv = htc.radiative_heat_transfer_coefficient_simplified_summer(
-            effective_emissivity=effective_emissivity)
+        h_rv = htc.get_h_rv(calc_mode="simplified_winter", eps_eff=effective_emissivity)
 
     # 通気風量の計算
     v_vent = parm.v_a * parm.l_d * parm.l_w
@@ -85,17 +83,15 @@ def get_vent_wall_temperature_by_simplified_calculation_no_02(parm: vw.Parameter
     theta_sat = epf.get_theta_SAT(theta_e=parm.theta_e, a_surf=parm.a_surf, j_surf=parm.J_surf, h_out=h_out)
 
     # 有効放射率の計算
-    effective_emissivity = htc.effective_emissivity_parallel(parm.emissivity_1, parm.emissivity_2)
+    effective_emissivity = htc.get_e(parm.emissivity_1, parm.emissivity_2)
 
     # 対流熱伝達率、放射熱伝達率の計算
     if parm.theta_r == 20.0:
         h_cv = htc.get_h_cv(calc_mode="simplified_winter", v_a=parm.v_a)
-        h_rv = htc.radiative_heat_transfer_coefficient_simplified_winter(
-            effective_emissivity=effective_emissivity)
+        h_rv = htc.get_h_rv(calc_mode="simplified_winter", eps_eff=effective_emissivity)
     else:
         h_cv = htc.get_h_cv(calc_mode="simplified_winter", v_a=parm.v_a)
-        h_rv = htc.radiative_heat_transfer_coefficient_simplified_summer(
-            effective_emissivity=effective_emissivity)
+        h_rv = htc.get_h_rv(calc_mode="simplified_winter", eps_eff=effective_emissivity)
 
     # 室外側から通気層までの熱貫流率、室内側から通気層までの熱貫流率を計算
     u_o = epf.get_u_o(parm.C_1, h_cv, h_rv)
@@ -132,17 +128,15 @@ def get_vent_wall_performance_factor_by_simplified_calculation_no_03(parm: vw.Pa
     """
 
     # 有効放射率の計算
-    effective_emissivity = htc.effective_emissivity_parallel(parm.emissivity_1, parm.emissivity_2)
+    effective_emissivity = htc.get_e(parm.emissivity_1, parm.emissivity_2)
 
     # 対流熱伝達率、放射熱伝達率の計算
     if parm.theta_r == 20.0:
         h_cv = htc.get_h_cv(calc_mode="simplified_winter", v_a=parm.v_a)
-        h_rv = htc.radiative_heat_transfer_coefficient_simplified_winter(
-            effective_emissivity=effective_emissivity)
+        h_rv = htc.get_h_rv(calc_mode="simplified_winter", eps_eff=effective_emissivity)
     else:
         h_cv = htc.get_h_cv(calc_mode="simplified_winter", v_a=parm.v_a)
-        h_rv = htc.radiative_heat_transfer_coefficient_simplified_summer(
-            effective_emissivity=effective_emissivity)
+        h_rv = htc.get_h_rv(calc_mode="simplified_winter", eps_eff=effective_emissivity)
 
     # 熱伝達率の計算
     h_v = 2.0 * h_rv + h_cv
@@ -192,17 +186,15 @@ def get_vent_wall_performance_factor_by_simplified_calculation_no_04(parm: vw.Pa
     """
 
     # 有効放射率の計算
-    effective_emissivity = htc.effective_emissivity_parallel(parm.emissivity_1, parm.emissivity_2)
+    effective_emissivity = htc.get_e(parm.emissivity_1, parm.emissivity_2)
 
     # 対流熱伝達率、放射熱伝達率の計算
     if parm.theta_r == 20.0:
         h_cv = htc.get_h_cv(calc_mode="simplified_winter", v_a=parm.v_a)
-        h_rv = htc.radiative_heat_transfer_coefficient_simplified_winter(
-            effective_emissivity=effective_emissivity)
+        h_rv = htc.get_h_rv(calc_mode="simplified_winter", eps_eff=effective_emissivity)
     else:
         h_cv = htc.get_h_cv(calc_mode="simplified_winter", v_a=parm.v_a)
-        h_rv = htc.radiative_heat_transfer_coefficient_simplified_summer(
-            effective_emissivity=effective_emissivity)
+        h_rv = htc.get_h_rv(calc_mode="simplified_winter", eps_eff=effective_emissivity)
 
     # 通気風量の計算
     v_vent = parm.v_a * parm.l_d * parm.l_w

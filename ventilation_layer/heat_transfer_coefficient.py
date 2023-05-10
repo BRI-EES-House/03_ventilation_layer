@@ -1,56 +1,67 @@
 import math
 from typing import Optional
 
-from ventilation_layer.global_number import get_abs_temp, get_sgm, get_g, get_lambda_air, get_beta_air, get_mu_air, get_pr_air, get_c_air, get_rho_air
 from ventilation_layer import global_number as gn
 
 
-def effective_emissivity_parallel(emissivity_1: float, emissivity_2: float) -> float:
+def get_e(eps1: float, eps2: float, l_d: Optional[float] = None, l_s: Optional[float] = None, method: Optional[str] = "parallel") -> float:
+
+    if method == "parallel":
+        return _get_e_parallel(eps1=eps1, eps2=eps2)
+    elif method == "two_dimension":
+        return _get_e_two_dimension(eps1=eps1, eps2=eps2, l_d=l_d, l_s=l_s)
+    else:
+        raise ValueError()
+        
+
+def _get_e_parallel(eps1: float, eps2: float) -> float:
+    """有効放射率の計算（無限の平行面の場合）
+
+    Args:
+        eps1: 面1の放射率, -
+        eps2: 面2の放射率, -
+    Returns:
+        有効放射率, -
     """
-    有効放射率の計算（無限の平行面の場合）
 
-    :param emissivity_1:    面1の放射率, -
-    :param emissivity_2:    面2の放射率, -
-    :return:                有効放射率, -
+    return 1 / ((1 / eps1) + (1 / eps2) - 1)
+
+
+def _get_e_two_dimension(eps1: float, eps2: float, l_d: float, l_s: float) -> float:
+    """有効放射率の計算（二次元空間の場合）
+
+    Args:
+        eps1: 面1の放射率, -
+        eps2: 面2の放射率, -
+        l_d: 通気層の厚さ, m
+        l_s: 通気胴縁または垂木の間隔, m
+    Returns:
+        有効放射率, -
     """
 
-    effective_emissivity = 1 / ((1 / emissivity_1) + (1 / emissivity_2) - 1)
-    return effective_emissivity
+    return 1.0 / (1.0 / eps1 + 1.0 / eps2 - 2.0 + 1.0 / (1.0 / 2.0 * (1.0 + math.sqrt(1.0 + l_d**2.0 / l_s**2.0) - l_d / l_s)))
 
 
-def effective_emissivity_two_dimension(emissivity_1: float, emissivity_2: float, l_d: float, l_s: float) -> float:
+def get_h_rv(eps_eff: float, calc_mode: Optional[str] = "detailed", theta_1: Optional[float] = None, theta_2: Optional[float] = None) -> float:
+    """計算モードに応じた放射熱伝達率を計算する
+
+    Args:
+        calc_mode: 計算モード
+        theta_1: 通気層に面する面1の表面温度, degrees
+        theta_2: 通気層に面する面2の表面温度, degrees
+        eps_eff: 有効放射率, -
+    Returns:
+        放射熱伝達率, W/(m2・K)
     """
-    有効放射率の計算（二次元空間の場合）
 
-    :param emissivity_1:    面1の放射率, -
-    :param emissivity_2:    面2の放射率, -
-    :param l_d:             通気層の厚さ, m
-    :param l_s:             通気胴縁または垂木の間隔, m
-    :return:                有効放射率, -
-    """
-    effective_emissivity = 1.0 / (1.0 / emissivity_1 + 1.0 / emissivity_2 - 2.0 + 1.0 /
-                                  (1.0 / 2.0 * (1.0 + math.sqrt(1.0 + l_d ** 2.0 / l_s ** 2.0) - l_d / l_s)))
-    return effective_emissivity
-
-
-def get_radiative_heat_transfer_coefficient(calc_mode: str, theta_1: float, theta_2: float, effective_emissivity: float) -> float:
-    """
-    計算モードに応じた放射熱伝達率を計算する
-
-    :param calc_mode:   計算モード
-    :param theta_1:     通気層に面する面1の表面温度, degC
-    :param theta_2:     通気層に面する面2の表面温度, degC
-    :param effective_emissivity: 有効放射率, -
-    :return:            放射熱伝達率, W/(m2・K)
-    """
     if calc_mode == "detailed":
-        h_rv = radiative_heat_transfer_coefficient_detailed(theta_1, theta_2, effective_emissivity)
+        h_rv = _get_h_rv_detailed(theta_1, theta_2, eps_eff)
     elif calc_mode == "simplified_winter":
-        h_rv = radiative_heat_transfer_coefficient_simplified_winter(effective_emissivity)
+        h_rv = _get_h_rv_simplified_winter(eps_eff)
     elif calc_mode == "simplified_summer":
-        h_rv = radiative_heat_transfer_coefficient_simplified_summer(effective_emissivity)
+        h_rv = _get_h_rv_simplified_summer(eps_eff)
     elif calc_mode == "simplified_all_season":
-        h_rv = radiative_heat_transfer_coefficient_simplified_all_season(effective_emissivity)
+        h_rv = _get_h_rv_simplified_all_season(eps_eff)
     elif calc_mode == "simplified_zero":
         h_rv = 0.0
     else:
@@ -59,47 +70,57 @@ def get_radiative_heat_transfer_coefficient(calc_mode: str, theta_1: float, thet
     return h_rv
 
 
-def radiative_heat_transfer_coefficient_simplified_winter(effective_emissivity: float) -> float:
+def _get_h_rv_simplified_winter(eps_eff: float) -> float:
+    """放射熱伝達率[W/(m2・K)]の計算（簡易計算、冬期条件）
+
+    Args:
+        effective_emissivity: 有効放射率, -
+    Returns:
+        放射熱伝達率, W/(m2・K)
     """
-    放射熱伝達率[W/(m2・K)]の計算（簡易計算、冬期条件）
 
-    :param effective_emissivity: 有効放射率, -
-    :return:                     放射熱伝達率, W/(m2・K)
+    return 5.054 * eps_eff
+
+
+def _get_h_rv_simplified_summer(eps_eff: float) -> float:
+    """放射熱伝達率[W/(m2・K)]の計算（簡易計算、夏期条件）
+
+    Args:
+        eps_eff: 有効放射率, -
+    Returns:
+        放射熱伝達率, W/(m2・K)
     """
-    return 5.054 * effective_emissivity
+
+    return 6.615 * eps_eff
 
 
-def radiative_heat_transfer_coefficient_simplified_summer(effective_emissivity: float) -> float:
+def _get_h_rv_simplified_all_season(eps_eff: float) -> float:
+    """放射熱伝達率[W/(m2・K)]の計算（簡易計算、通年）
+
+    Args:
+        eps_eff: 有効放射率, -
+    Returns:
+        放射熱伝達率, W/(m2・K)
     """
-    放射熱伝達率[W/(m2・K)]の計算（簡易計算、夏期条件）
 
-    :param effective_emissivity: 有効放射率, -
-    :return:                     放射熱伝達率, W/(m2・K)
+    return 5.88 * eps_eff
+
+
+def _get_h_rv_detailed(theta_1: float, theta_2: float, eps_eff: float) -> float:
+    """放射熱伝達率[W/(m2・K)]の計算（詳細計算）
+
+    Args:
+        theta_1: 通気層に面する面1の表面温度, degrees
+        theta_2: 通気層に面する面2の表面温度, degrees
+        eps_eff: 有効放射率, -
+    Returns:
+        放射熱伝達率, W/(m2・K)
     """
-    return 6.615 * effective_emissivity
 
-
-def radiative_heat_transfer_coefficient_simplified_all_season(effective_emissivity: float) -> float:
-    """
-    放射熱伝達率[W/(m2・K)]の計算（簡易計算、通年）
-
-    :param effective_emissivity: 有効放射率, -
-    :return:                     放射熱伝達率, W/(m2・K)
-    """
-    return 5.88 * effective_emissivity
-
-
-def radiative_heat_transfer_coefficient_detailed(theta_1: float, theta_2: float, effective_emissivity: float) -> float:
-    """
-    放射熱伝達率[W/(m2・K)]の計算（詳細計算）
-
-    :param theta_1:     通気層に面する面1の表面温度, degC
-    :param theta_2:     通気層に面する面2の表面温度, degC
-    :param effective_emissivity: 有効放射率, -
-    :return:            放射熱伝達率, W/(m2・K)
-    """
-    t_m = (theta_1 + get_abs_temp() + theta_2 + get_abs_temp()) / 2
-    h_rv = 4 * get_sgm() * effective_emissivity * (t_m ** 3)
+    t_m = (theta_1 + gn.get_abs_temp() + theta_2 + gn.get_abs_temp()) / 2
+    
+    h_rv = 4 * gn.get_sgm() * eps_eff * (t_m ** 3)
+    
     return h_rv
 
 

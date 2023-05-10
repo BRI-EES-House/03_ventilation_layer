@@ -107,10 +107,10 @@ def get_heat_balance(matrix_temp: np.zeros(5), parm: Parameters, calc_mode_h_cv:
     h_cv = heat_transfer_coefficient.get_h_cv(calc_mode_h_cv, parm.v_a, theta_1, theta_2, parm.angle, parm.l_h, parm.l_d)
 
     # 有効放射率の計算
-    effective_emissivity = heat_transfer_coefficient.effective_emissivity_parallel(parm.emissivity_1, parm.emissivity_2)
+    effective_emissivity = heat_transfer_coefficient.get_e(parm.emissivity_1, parm.emissivity_2)
 
     # 放射熱伝達率の計算
-    h_rv = heat_transfer_coefficient.get_radiative_heat_transfer_coefficient(calc_mode_h_rv, theta_1, theta_2, effective_emissivity)
+    h_rv = heat_transfer_coefficient.get_h_rv(effective_emissivity, calc_mode_h_rv, theta_1, theta_2)
 
     # 通気風量の計算
     v_vent = parm.v_a * parm.l_d * parm.l_w
@@ -189,10 +189,10 @@ def get_wall_status_values(parm: Parameters, calc_mode_h_cv: str, calc_mode_h_rv
         h_cv = heat_transfer_coefficient.get_h_cv(calc_mode=calc_mode_h_cv, v_a=parm.v_a, theta_1=matrix_temp_fixed[1], theta_2=matrix_temp_fixed[2], angle=parm.angle, l_h=parm.l_h, l_d=parm.l_d)
 
         # 有効放射率の計算
-        effective_emissivity = heat_transfer_coefficient.effective_emissivity_parallel(emissivity_1=parm.emissivity_1, emissivity_2=parm.emissivity_2)
+        effective_emissivity = heat_transfer_coefficient.get_e(eps1=parm.emissivity_1, eps2=parm.emissivity_2)
 
         # 放射熱伝達率の計算
-        h_rv = heat_transfer_coefficient.get_radiative_heat_transfer_coefficient(calc_mode=calc_mode_h_rv, theta_1=matrix_temp_fixed[1], theta_2=matrix_temp_fixed[2], effective_emissivity=effective_emissivity)
+        h_rv = heat_transfer_coefficient.get_h_rv(eps_eff=effective_emissivity, calc_mode=calc_mode_h_rv, theta_1=matrix_temp_fixed[1], theta_2=matrix_temp_fixed[2])
 
     else:
         matrix_temp_fixed = np.full(5, np.nan)
