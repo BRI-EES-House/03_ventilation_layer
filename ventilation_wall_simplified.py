@@ -1,6 +1,6 @@
 import math
 import numpy as np
-import heat_transfer_coefficient as htc
+import ventilation_layer.heat_transfer_coefficient as htc
 import ventilation_wall as vw
 import envelope_performance_factors as epf
 from ventilation_layer.global_number import get_c_air, get_rho_air
