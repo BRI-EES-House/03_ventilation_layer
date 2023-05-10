@@ -101,7 +101,7 @@ def radiative_heat_transfer_coefficient_detailed(theta_1: float, theta_2: float,
     return h_rv
 
 
-def get_convective_heat_transfer_coefficient(calc_mode: str, v_a: float, theta_1: float, theta_2: float, angle: float, l_h: float, l_d: float) -> float:
+def get_h_cv(calc_mode: str, v_a: float, theta_1: float, theta_2: float, angle: float, l_h: float, l_d: float) -> float:
     """
     計算モードに応じた対流熱伝達率を計算する
 
@@ -115,7 +115,7 @@ def get_convective_heat_transfer_coefficient(calc_mode: str, v_a: float, theta_1
     :return:            対流熱伝達率, W/(m2・K)
     """
     if calc_mode == "detailed":
-        h_cv = get_h_cv_detailed(v_a, theta_1, theta_2, angle, l_h, l_d)
+        h_cv = _get_h_cv_detailed(v_a, theta_1, theta_2, angle, l_h, l_d)
     elif calc_mode == "simplified_winter":
         h_cv = convective_heat_transfer_coefficient_simplified_winter(v_a)
     elif calc_mode == "simplified_summer":
@@ -158,7 +158,7 @@ def convective_heat_transfer_coefficient_simplified_all_season(v_a: float) -> fl
     return 4.096 * v_a + 2.06
 
 
-def get_h_cv_detailed(v_a: float, theta_1: float, theta_2: float, angle: float, l_h: float, l_d: float) -> float:
+def _get_h_cv_detailed(v_a: float, theta_1: float, theta_2: float, angle: float, l_h: float, l_d: float) -> float:
     """
     対流熱伝達率[W/(m2・K)]の計算（詳細計算）
 
