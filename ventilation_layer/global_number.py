@@ -142,9 +142,11 @@ def get_abs_temp() -> float:
 
 def get_h_out() -> float:
     """
+
     Returns:
         室外側総合熱伝達率, W/(m2・K)
     """
+    
     return 25.0
 
 
