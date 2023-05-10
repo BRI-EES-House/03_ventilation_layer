@@ -1,5 +1,5 @@
 
-def get_c_air(T: float) -> float:
+def get_c_air() -> float:
     """
     Returns:
         空気の定圧比熱, J/(kg・K)
@@ -63,7 +63,7 @@ def get_a_air(t: float) -> float:
     :param t: 空気温度
     :return: 空気の熱拡散率
     """
-    return get_lambda_air(t) / get_c_air(t) / get_rho_air(t)
+    return get_lambda_air(t) / get_c_air() / get_rho_air(t)
 
 
 def get_pr_air(t: float) -> float:

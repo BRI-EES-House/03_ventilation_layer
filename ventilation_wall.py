@@ -118,7 +118,7 @@ def get_heat_balance(matrix_temp: np.zeros(5), parm: Parameters, calc_mode_h_cv:
     # 通気層の平均空気温度の計算用の値を設定
     beta = 0.0
     if parm.v_a > 0.0:
-        beta = (2 * h_cv * parm.l_w) / (get_c_air(matrix_temp[4]) * get_rho_air(matrix_temp[4]) * v_vent)
+        beta = (2 * h_cv * parm.l_w) / (get_c_air() * get_rho_air(matrix_temp[4]) * v_vent)
 
     # 行列に値を設定
     matrix_coeff[0][0] = h_out + parm.C_1
@@ -250,13 +250,13 @@ def get_heat_flow_exhaust(matrix_temp: np.ndarray, param: Parameters, theta_as_i
         # 通気風量の計算
         v_vent = param.v_a * param.l_d * param.l_w
 
-        ec = math.exp(- 2.0 * h_cv * param.l_w * param.l_h / (get_c_air(matrix_temp[4]) * get_rho_air(matrix_temp[4]) * v_vent))
+        ec = math.exp(- 2.0 * h_cv * param.l_w * param.l_h / (get_c_air() * get_rho_air(matrix_temp[4]) * v_vent))
 
         # 出口温度の計算
         theta_out = (1.0 - ec) * (matrix_temp[1] + matrix_temp[2]) / 2.0 + ec * theta_as_in
 
         # 通気層の排気熱量
-        return get_c_air(matrix_temp[4]) * get_rho_air(matrix_temp[4]) * v_vent * (theta_out - theta_as_in) / (param.l_w * param.l_h)
+        return get_c_air() * get_rho_air(matrix_temp[4]) * v_vent * (theta_out - theta_as_in) / (param.l_w * param.l_h)
 
     else:
         return 0.0

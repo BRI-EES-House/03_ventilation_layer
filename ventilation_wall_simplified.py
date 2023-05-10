@@ -41,7 +41,7 @@ def get_vent_wall_temperature_by_simplified_calculation_no_01(parm: vw.Parameter
     # 通気層の平均空気温度の計算用の値を設定
     epc_s = 0.0
     if parm.v_a > 0.0:
-        beta = (2 * h_cv * parm.l_w) / (get_c_air(parm.theta_e) * get_rho_air(parm.theta_e) * v_vent)
+        beta = (2 * h_cv * parm.l_w) / (get_c_air() * get_rho_air(parm.theta_e) * v_vent)
         epc_s = 1.0 / parm.l_h * 1.0 / beta * (math.exp(-beta * parm.l_h) - 1)
 
     # 熱抵抗を設定
@@ -109,7 +109,7 @@ def get_vent_wall_temperature_by_simplified_calculation_no_02(parm: vw.Parameter
 
     # 通気層の平均空気温度の計算用の値を設定
     if parm.v_a > 0.0:
-        w_h = (u_o + u_i) / (get_c_air(parm.theta_e) * get_rho_air(parm.theta_e) * v_vent)
+        w_h = (u_o + u_i) / (get_c_air() * get_rho_air(parm.theta_e) * v_vent)
         epc = 1.0 - math.exp(-w_h * parm.l_h)
         x = 1.0 - epc / (w_h * parm.l_h)
     else:
@@ -152,7 +152,7 @@ def get_vent_wall_performance_factor_by_simplified_calculation_no_03(parm: vw.Pa
 
     # 通気層の熱抵抗の値を設定
     if parm.v_a > 0.0:
-        beta = (2 * h_cv * parm.l_w) / (get_c_air(parm.theta_e) * get_rho_air(parm.theta_e) * v_vent)
+        beta = (2 * h_cv * parm.l_w) / (get_c_air() * get_rho_air(parm.theta_e) * v_vent)
         epc_s = 1.0 / parm.l_h * 1.0 / beta * (math.exp(-beta * parm.l_h) - 1.0)
         epc_s_dash = - ((2.0 * h_cv) * epc_s) / (1.0 + epc_s)
         h_v_dash = h_v + 1.0 / ((1.0 / epc_s_dash) + h_rv / (h_v * h_cv))
@@ -213,7 +213,7 @@ def get_vent_wall_performance_factor_by_simplified_calculation_no_04(parm: vw.Pa
 
     # 通気層の平均空気温度の計算用の値を設定
     if parm.v_a > 0.0:
-        beta = (2 * h_cv * parm.l_w) / (get_c_air(parm.theta_e) * get_rho_air(parm.theta_e) * v_vent)
+        beta = (2 * h_cv * parm.l_w) / (get_c_air() * get_rho_air(parm.theta_e) * v_vent)
         epc_s = 1.0 / parm.l_h * 1.0 / beta * (math.exp(-beta * parm.l_h) - 1)
         epc_s_dash = - ((2.0 * h_cv) * epc_s) / (1 + epc_s)
         r_u = 1.0 / ((1.0 / (1.0 / u_o_s + 1.0 / h_rv)) + (1.0 / (1.0 / epc_s_dash + 1.0 / h_cv))) + 1.0 / u_i_s

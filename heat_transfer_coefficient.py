@@ -1,6 +1,6 @@
 import math
 from ventilation_layer.global_number import get_abs_temp, get_sgm, get_g, get_lambda_air, get_beta_air, get_mu_air, get_pr_air, get_c_air, get_rho_air
-
+from ventilation_layer import global_number as gn
 
 def effective_emissivity_parallel(emissivity_1: float, emissivity_2: float) -> float:
     """
@@ -208,7 +208,7 @@ def get_nusselt_number(theta_1: float, theta_2: float, angle: float, l_h: float,
     pr = get_pr_air(theta_ave)
 
     # レーリー数の計算
-    rayleigh_number = (get_g() * get_beta_air(theta_ave) * abs(theta_1 - theta_2) * (l_d ** 3) * (get_rho_air(theta_ave) ** 2) * get_c_air(theta_ave)) / (get_mu_air(theta_ave) * get_lambda_air(theta_ave))
+    rayleigh_number = (get_g() * get_beta_air(theta_ave) * abs(theta_1 - theta_2) * (l_d ** 3) * (get_rho_air(theta_ave) ** 2) * get_c_air()) / (get_mu_air(theta_ave) * get_lambda_air(theta_ave))
 
     # ヌセルト数の計算
     nusselt_number = 0
