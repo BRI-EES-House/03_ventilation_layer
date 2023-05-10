@@ -1,5 +1,5 @@
 import math
-import global_number
+import ventilation_layer.global_number as global_number
 
 
 def get_solar_radiation_on_inclined_surfaces(

@@ -3,7 +3,7 @@ from scipy import optimize
 import numpy as np
 import heat_transfer_coefficient
 from dataclasses import dataclass
-from global_number import get_c_air, get_rho_air
+from ventilation_layer.global_number import get_c_air, get_rho_air
 
 
 @dataclass

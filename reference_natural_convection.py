@@ -1,5 +1,5 @@
 import math
-from global_number import get_gr_air, get_pr_air, get_lambda_air
+from ventilation_layer.global_number import get_gr_air, get_pr_air, get_lambda_air
 
 
 def calc_takeda_method(delta_t: float, direction: str) -> float:

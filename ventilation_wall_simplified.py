@@ -3,7 +3,7 @@ import numpy as np
 import heat_transfer_coefficient as htc
 import ventilation_wall as vw
 import envelope_performance_factors as epf
-from global_number import get_c_air, get_rho_air
+from ventilation_layer.global_number import get_c_air, get_rho_air
 
 
 def get_vent_wall_temperature_by_simplified_calculation_no_01(parm: vw.Parameters, h_out: float) -> np.zeros(3):

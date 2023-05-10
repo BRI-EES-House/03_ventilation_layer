@@ -1,4 +1,4 @@
-import global_number
+import ventilation_layer.global_number as global_number
 import ventilation_wall as vw
 import envelope_performance_factors as ep
 

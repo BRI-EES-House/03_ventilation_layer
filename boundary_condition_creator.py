@@ -1,7 +1,7 @@
 import itertools
 import pandas as pd
 import numpy as np
-import global_number
+import ventilation_layer.global_number as global_number
 import ventilation_wall as vw
 
 

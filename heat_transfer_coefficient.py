@@ -1,5 +1,5 @@
 import math
-from global_number import get_abs_temp, get_sgm, get_g, get_lambda_air, get_beta_air, get_mu_air, get_pr_air, get_c_air, get_rho_air
+from ventilation_layer.global_number import get_abs_temp, get_sgm, get_g, get_lambda_air, get_beta_air, get_mu_air, get_pr_air, get_c_air, get_rho_air
 
 
 def effective_emissivity_parallel(emissivity_1: float, emissivity_2: float) -> float:

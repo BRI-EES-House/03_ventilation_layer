@@ -1,6 +1,6 @@
 import numpy as np
 import ventilation_wall
-import global_number
+import ventilation_layer.global_number as global_number
 
 
 def overall_heat_transfer_coefficient(theta_e: float, theta_r: float, a_surf: float, j_surf: float, C_2: float,
