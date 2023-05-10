@@ -60,36 +60,6 @@ def get_k_e(theta_as_e: float, theta_r: float, theta_SAT: float) -> float:
     return k_e
 
 
-# 通気層を有する壁体の日射熱取得率(-)の計算
-# TODO: parmを個別の変数に書き下す、固定値はglobal_numberから取得する、通気層の角度（angle）によって表面熱伝達抵抗を変更する
-def solar_heat_gain_coefficient(parm: ventilation_wall.Parameters, theta_as_ave: float, h_cv: float, h_rv: float) -> float:
-    """
-
-    :param parm:
-    :param theta_as_ave:
-    :param h_cv:
-    :param h_rv:
-    :return:
-    """
-    # 固定値を設定
-    # Note:固定値はグローバル変数にするのがよいか
-    h_out = 25.0    # 室外側総合熱伝達率, W/(m2・K)
-    r_s_e = 0.11  # 室外側表面熱伝達抵抗, (m2・K)/W, 省エネ基準の規定値
-    r_s_r = 0.11  # 室内側表面熱伝達抵抗, (m2・K)/W, 省エネ基準の規定値
-    # Note: 省エネ基準の規定による表面熱伝達抵抗は、屋根、外壁で値が異なる。どのように判定するかが課題。
-
-    # 相当外気温度を計算
-    theta_SAT = get_theta_SAT(parm.theta_e, parm.a_surf, parm.J_surf, h_out)
-
-    # 温度、風速依存の熱伝達率を使用したU値を計算
-    u_s_dash = get_u_s_dash(r_s_e, r_s_r, parm.C_2, h_cv, h_rv)
-
-    # 通気層を有する壁体の日射熱取得率(-)を計算
-    eta_e = u_s_dash * parm.a_surf/h_out * (theta_as_ave - parm.theta_r) / (theta_SAT - parm.theta_r)
-
-    return eta_e
-
-
 def get_theta_SAT(theta_e: float, a_surf: float, j_surf: float, h_out: float) -> float:
     """
     相当外気温度[℃]を計算する

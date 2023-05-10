@@ -24,7 +24,6 @@
 - 当初は通気層を考慮した壁体の相当熱貫流率、日射熱取得率を直接計算する方法を検討していたが、通気層内の放射熱伝達率、対流熱伝達率を固定化して、室内表面熱流を直接計算する方法に変更したため、下記の関数は使用していない。
   - overall_heat_transfer_coefficient
   - get_k_e
-  - solar_heat_gain_coefficient
 
 ### heat_transfer_coefficient.py
 - 放射熱伝達率、対流熱伝達率を計算する関数を定義しているファイル。
