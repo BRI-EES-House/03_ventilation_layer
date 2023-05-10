@@ -152,9 +152,11 @@ def get_h_out() -> float:
 
 def get_h_in() -> float:
     """
+
     Returns:
         室内側総合熱伝達率, W/(m2・K)
     """
+    
     return 9.0
 
 
