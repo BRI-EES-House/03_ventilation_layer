@@ -93,9 +93,13 @@ def get_a_air(t: float) -> float:
 
 def get_pr_air(t: float) -> float:
     """
-    :param t: 空気温度
-    :return: プラントル数
+
+    Args:
+        t: 空気温度
+    Returns:
+        プラントル数
     """
+
     return get_new_air(t) / get_a_air(t)
 
 
