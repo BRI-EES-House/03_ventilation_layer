@@ -132,9 +132,11 @@ def get_sgm() -> float:
 
 def get_abs_temp() -> float:
     """
+
     Returns:
         絶対温度, K
     """
+    
     return 273.15
 
 
