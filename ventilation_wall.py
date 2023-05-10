@@ -78,7 +78,7 @@ class WallStatusValues:
     optimize_message: str
 
 
-def get_heat_balance(matrix_temp: np.zeros(5), parm: Parameters, calc_mode_h_cv: str, calc_mode_h_rv: str,
+def _get_heat_balance(matrix_temp: np.zeros(5), parm: Parameters, calc_mode_h_cv: str, calc_mode_h_rv: str,
                      h_out: float, h_in: float) -> np.zeros(5):
     """
     熱収支式を解く関数
@@ -174,7 +174,7 @@ def get_wall_status_values(parm: Parameters, calc_mode_h_cv: str, calc_mode_h_rv
     matrix_temp[4] = (matrix_temp[1] + matrix_temp[2]) / 2
 
     # 通気層内の各層の熱収支式の最適解を収束計算で求める
-    optimize_result = optimize.root(fun=get_heat_balance, x0=matrix_temp, args=(parm, calc_mode_h_cv, calc_mode_h_rv, h_out, h_in), method='lm')
+    optimize_result = optimize.root(fun=_get_heat_balance, x0=matrix_temp, args=(parm, calc_mode_h_cv, calc_mode_h_rv, h_out, h_in), method='lm')
 
     # 収束した場合は各層の状態値を設定、収束しなかった場合はすべて無効（Nan）とする
     if optimize_result.success:
@@ -183,7 +183,7 @@ def get_wall_status_values(parm: Parameters, calc_mode_h_cv: str, calc_mode_h_rv
         matrix_temp_fixed = optimize_result.x
 
         # 各層の熱収支を計算
-        heat_balance = get_heat_balance(matrix_temp_fixed, parm, calc_mode_h_cv, calc_mode_h_rv, h_out, h_in)
+        heat_balance = _get_heat_balance(matrix_temp_fixed, parm, calc_mode_h_cv, calc_mode_h_rv, h_out, h_in)
 
         # 対流熱伝達率の計算
         h_cv = heat_transfer_coefficient.get_h_cv(calc_mode=calc_mode_h_cv, v_a=parm.v_a, theta_1=matrix_temp_fixed[1], theta_2=matrix_temp_fixed[2], angle=parm.angle, l_h=parm.l_h, l_d=parm.l_d)
@@ -222,7 +222,7 @@ def get_heat_flow_0(matrix_temp: np.ndarray, param: Parameters, h_out: float) ->
     return h_out * (theta_sat - matrix_temp[0])
 
 
-def get_heat_flow_1(matrix_temp: np.ndarray, param: Parameters) -> float:
+def _get_heat_flow_1(matrix_temp: np.ndarray, param: Parameters) -> float:
     """
     各部温度から外装材伝導熱量を計算する
 
@@ -262,7 +262,7 @@ def get_heat_flow_exhaust(matrix_temp: np.ndarray, param: Parameters, theta_as_i
         return 0.0
 
 
-def get_heat_flow_convect_vent_layer(matrix_temp: np.ndarray, param: Parameters, h_cv: float) -> float:
+def _get_heat_flow_convect_vent_layer(matrix_temp: np.ndarray, param: Parameters, h_cv: float) -> float:
     """
     通気層内表面から通気層空気への対流熱量
 
@@ -275,7 +275,7 @@ def get_heat_flow_convect_vent_layer(matrix_temp: np.ndarray, param: Parameters,
     return 2.0 * h_cv * ((matrix_temp[1] + matrix_temp[2]) / 2.0 - matrix_temp[4])
 
 
-def get_heat_flow_2(matrix_temp: np.ndarray, h_cv: float, h_rv: float) -> tuple:
+def _get_heat_flow_2(matrix_temp: np.ndarray, h_cv: float, h_rv: float) -> tuple:
     """
     通気層熱伝達量の計算
 
@@ -289,7 +289,7 @@ def get_heat_flow_2(matrix_temp: np.ndarray, h_cv: float, h_rv: float) -> tuple:
     return (h_cv * (matrix_temp[1] - matrix_temp[2]), h_rv * (matrix_temp[1] - matrix_temp[2]))
 
 
-def get_heat_flow_3(matrix_temp: np.ndarray, param: Parameters) -> float:
+def _get_heat_flow_3(matrix_temp: np.ndarray, param: Parameters) -> float:
     """
     各部温度から断熱材+内装材伝導熱量を計算する
 
