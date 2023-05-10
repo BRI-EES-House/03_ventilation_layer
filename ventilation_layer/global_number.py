@@ -39,15 +39,19 @@ def get_lambda_air(t: float) -> float:
     Returns:
         空気の熱伝導率, W/(m・K)
     """
-    
+
     return 0.0241 + 7.7e-5 * t
 
 
 def get_beta_air(t: float) -> float:
     """
+
+    Args:
+        空気の温度, degrees
     Returns:
         空気の体膨張率, 1/K
     """
+    
     return 1.0 / (t + get_abs_temp())
 
 
