@@ -105,14 +105,19 @@ def get_pr_air(t: float) -> float:
 
 def get_gr_air(tw: float, tf: float, d: float) -> float:
     """
-    :param tw: 表面温度, C
-    :param tf: 流体温度, C
-    :param d: 代表長さ, m
-    :return: グラスホフ数
+
+    Args:
+        tw: 表面温度, degrees
+        tf: 流体温度, degrees
+        d: 代表長さ, m
+    Returns:
+        グラスホフ数
     """
+
     # 膜温度の計算
     t_ave = (tw + tf) / 2.0
-    return get_g() * get_beta_air(tf) * abs(tw - tf) * d ** 3.0 / get_new_air(t_ave) ** 2.0
+    
+    return get_g() * get_beta_air(tf) * abs(tw - tf) * d ** 3.0 / get_new_air(t=t_ave) ** 2.0
 
 
 def get_sgm() -> float:
