@@ -1,56 +1,10 @@
 import math
 from scipy import optimize
 import numpy as np
-import ventilation_layer.heat_transfer_coefficient as heat_transfer_coefficient
-from ventilation_layer import heat_transfer_coefficient as htc
 from dataclasses import dataclass
-from ventilation_layer.global_number import get_c_air, get_rho_air
 
-
-@dataclass
-class Parameters:
-
-    # the outdoor temperature, degree C
-    theta_e: float
-
-    # the indoor temperature, degree C
-    theta_r: float
-
-    # the solar irradiance on the exterior surface, W/m2
-    J_surf: float
-
-    # the solar absorption ratio on the exterior surface, -
-    a_surf: float
-
-    # the thermal conductance of the outside material, W/m2K
-    C_1: float
-
-    # the thermal conductance of the inside material, W/m2K
-    C_2: float
-
-    # the length of the ventilation layer, m
-    l_h: float
-
-    # the width of the ventilation layer, m
-    l_w: float
-
-    # the thickness of the ventilation layer, m
-    l_d: float
-
-    # the angle of the ventilation layer, degrees
-    angle: float
-
-    # the mean air velocity of the ventilation layer, m/s
-    v_a: float
-
-    # 通気胴縁または垂木の間隔, m
-    l_s: float
-
-    # the emissivity of the surface 1 facing the ventilation layer, -
-    emissivity_1: float
-
-    # the emissivity of the surface 2 facing the ventilation layer, -
-    emissivity_2: float
+from ventilation_layer import heat_transfer_coefficient as htc
+from ventilation_layer import global_number as gn
 
 
 @dataclass
@@ -161,9 +115,8 @@ def _get_heat_balance(
     # the ventilation air volume, m3/s
     v_vent = v_a * l_d * l_w
 
-    # 通気層の平均空気温度の計算用の値を設定
     if v_a > 0.0:
-        beta = (2 * h_cv * l_w) / (get_c_air() * get_rho_air(theta_4) * v_vent)
+        beta = (2 * h_cv * l_w) / (gn.get_c_air() * gn.get_rho_air(theta_4) * v_vent)
         a41 = (1.0 + 1.0 / l_h * 1.0 / beta * (math.exp(-beta * l_h) - 1)) / 2
         a42 = (1.0 + 1.0 / l_h * 1.0 / beta * (math.exp(-beta * l_h) - 1)) / 2
         b4 = 1.0 / l_h * 1.0 / beta * (math.exp(-beta * l_h) - 1) * theta_e
@@ -237,13 +190,14 @@ def get_wall_status_values(
         通気層の状態値（通気層の各層の温度、各層の熱収支、対流熱伝達率、放射熱伝達率、最適化の終了ステータス、終了メッセージ）
     """
 
-    # 通気層内の各点の温度の初期値を設定
-    matrix_temp = np.zeros(5)
-    matrix_temp[0] = theta_e
-    matrix_temp[1] = theta_e + (theta_r - theta_e) / (4 * 3)
-    matrix_temp[2] = theta_e + (theta_r - theta_e) / (4 * 2)
-    matrix_temp[3] = theta_e + (theta_r - theta_e) / (4 * 1)
-    matrix_temp[4] = (matrix_temp[1] + matrix_temp[2]) / 2
+    # the initial temperature of the points in the ventilation layer
+    t0 = theta_e
+    t1 = theta_e + (theta_r - theta_e) * 1 / 4
+    t2 = theta_e + (theta_r - theta_e) * 2 / 4
+    t3 = theta_e + (theta_r - theta_e) * 3 / 4
+    t4 = (t1 + t2) / 2
+    
+    x0 = np.array([t0, t1, t2, t3, t4])
 
     def f(matrix_temp):
         return _get_heat_balance(
@@ -254,7 +208,7 @@ def get_wall_status_values(
 
 
     # 通気層内の各層の熱収支式の最適解を収束計算で求める
-    optimize_result = optimize.root(fun=f, x0=matrix_temp, method='lm')
+    optimize_result = optimize.root(fun=f, x0=x0, method='lm')
 
     if optimize_result.success:
 
@@ -373,12 +327,12 @@ def _get_q_flow_exhaust(v_a: float, l_d: float, l_w: float, l_h: float, theta_1:
         # the air flow of the ventilation layer, m3/s
         v_vent = v_a * l_d * l_w
 
-        ec = math.exp(- 2.0 * h_cv * l_w * l_h / (get_c_air() * get_rho_air(theta_4) * v_vent))
+        ec = math.exp(- 2.0 * h_cv * l_w * l_h / (gn.get_c_air() * gn.get_rho_air(theta_4) * v_vent))
 
         # the air temperature at the outlet of the ventilation layer, degrees
         theta_out = (1.0 - ec) * (theta_1 + theta_2) / 2.0 + ec * theta_as_in
 
-        return get_c_air() * get_rho_air(theta_4) * v_vent * (theta_out - theta_as_in) / (l_w * l_h)
+        return gn.get_c_air() * gn.get_rho_air(theta_4) * v_vent * (theta_out - theta_as_in) / (l_w * l_h)
 
     else:
 

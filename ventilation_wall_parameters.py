@@ -210,7 +210,7 @@ def get_wall_status_data_by_simplified_calculation_no_01() -> pd.DataFrame:
         for row in df.itertuples():
             print(row[0])
             # パラメータを設定
-            parms = (vw.Parameters(theta_e=row.theta_e,
+            parms = (vws.Parameters(theta_e=row.theta_e,
                                    theta_r=row.theta_r,
                                    J_surf=row.j_surf,
                                    a_surf=row.a_surf,
@@ -289,7 +289,7 @@ def get_wall_status_data_by_simplified_calculation_no_02() -> pd.DataFrame:
         for row in df.itertuples():
             print(row[0])
             # パラメータを設定
-            parms = (vw.Parameters(theta_e=row.theta_e,
+            parms = (vws.Parameters(theta_e=row.theta_e,
                                    theta_r=row.theta_r,
                                    J_surf=row.j_surf,
                                    a_surf=row.a_surf,
@@ -377,7 +377,7 @@ def get_wall_status_data_by_simplified_calculation_no_03() -> pd.DataFrame:
         for row in df.itertuples():
             print(row[0])
             # パラメータを設定
-            parms = (vw.Parameters(theta_e=row.theta_e,
+            parms = (vws.Parameters(theta_e=row.theta_e,
                                    theta_r=row.theta_r,
                                    J_surf=row.j_surf,
                                    a_surf=row.a_surf,
@@ -449,7 +449,7 @@ def get_wall_status_data_by_simplified_calculation_no_04() -> pd.DataFrame:
         for row in df.itertuples():
             print(row[0])
             # パラメータを設定
-            parms = (vw.Parameters(theta_e=row.theta_e,
+            parms = (vws.Parameters(theta_e=row.theta_e,
                                    theta_r=row.theta_r,
                                    J_surf=row.j_surf,
                                    a_surf=row.a_surf,

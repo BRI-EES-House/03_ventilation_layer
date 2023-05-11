@@ -1,12 +1,61 @@
 import math
 import numpy as np
+from dataclasses import dataclass
+
+
 import ventilation_layer.heat_transfer_coefficient as htc
 import ventilation_wall as vw
 import envelope_performance_factors as epf
 from ventilation_layer.global_number import get_c_air, get_rho_air
 
 
-def get_vent_wall_temperature_by_simplified_calculation_no_01(parm: vw.Parameters, h_out: float) -> np.zeros(3):
+@dataclass
+class Parameters:
+
+    # the outdoor temperature, degree C
+    theta_e: float
+
+    # the indoor temperature, degree C
+    theta_r: float
+
+    # the solar irradiance on the exterior surface, W/m2
+    J_surf: float
+
+    # the solar absorption ratio on the exterior surface, -
+    a_surf: float
+
+    # the thermal conductance of the outside material, W/m2K
+    C_1: float
+
+    # the thermal conductance of the inside material, W/m2K
+    C_2: float
+
+    # the length of the ventilation layer, m
+    l_h: float
+
+    # the width of the ventilation layer, m
+    l_w: float
+
+    # the thickness of the ventilation layer, m
+    l_d: float
+
+    # the angle of the ventilation layer, degrees
+    angle: float
+
+    # the mean air velocity of the ventilation layer, m/s
+    v_a: float
+
+    # 通気胴縁または垂木の間隔, m
+    l_s: float
+
+    # the emissivity of the surface 1 facing the ventilation layer, -
+    emissivity_1: float
+
+    # the emissivity of the surface 2 facing the ventilation layer, -
+    emissivity_2: float
+
+
+def get_vent_wall_temperature_by_simplified_calculation_no_01(parm: Parameters, h_out: float) -> np.zeros(3):
     """
     簡易計算法案No.1：簡易版の行列式により各部位の温度を求める関数
 
@@ -70,7 +119,7 @@ def get_vent_wall_temperature_by_simplified_calculation_no_01(parm: vw.Parameter
     return matrix_temp, h_cv, h_rv, R_i
 
 
-def get_vent_wall_temperature_by_simplified_calculation_no_02(parm: vw.Parameters, h_out: float):
+def get_vent_wall_temperature_by_simplified_calculation_no_02(parm: Parameters, h_out: float):
     """
     簡易計算法案No.2：簡易式により通気層の平均温度を求める関数
 
@@ -118,7 +167,7 @@ def get_vent_wall_temperature_by_simplified_calculation_no_02(parm: vw.Parameter
     return theta_as_ave, u_o, u_i
 
 
-def get_vent_wall_performance_factor_by_simplified_calculation_no_03(parm: vw.Parameters, h_out: float):
+def get_vent_wall_performance_factor_by_simplified_calculation_no_03(parm: Parameters, h_out: float):
     """
     簡易計算法案No.3：通気層を有する壁体の修正熱貫流率、修正日射熱取得率、室内表面熱流を求める関数
 
@@ -176,7 +225,7 @@ def get_vent_wall_performance_factor_by_simplified_calculation_no_03(parm: vw.Pa
     return h_cv, h_rv, u_dash, eta_dash, q_room_side
 
 
-def get_vent_wall_performance_factor_by_simplified_calculation_no_04(parm: vw.Parameters, h_out: float):
+def get_vent_wall_performance_factor_by_simplified_calculation_no_04(parm: Parameters, h_out: float):
     """
     簡易計算法案No.4：簡易計算法案No.3をさらに簡略化
 
