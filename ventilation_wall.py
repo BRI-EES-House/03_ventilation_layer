@@ -2,6 +2,7 @@ import math
 from scipy import optimize
 import numpy as np
 import ventilation_layer.heat_transfer_coefficient as heat_transfer_coefficient
+from ventilation_layer import heat_transfer_coefficient as htc
 from dataclasses import dataclass
 from ventilation_layer.global_number import get_c_air, get_rho_air
 
@@ -68,6 +69,18 @@ class WallStatusValues:
     # 放射熱伝達率, W/(m2・K)
     h_rv: float
 
+    # the heat flow from the outside(inclued solar irradiance) to the exterior surface, W/m2
+    q_flow_out: float
+
+    # the heat flow from the exterior surface to the surface of exterior side facing the ventilation layer, W/m2
+    q_flow_em: float
+
+    # the exhausted heat flow from the ventilation layer, W/m2
+    q_flow_exhaust: float
+
+    # the heat flow to the inside, W/m2
+    q_flow_in: float
+
     # 最適化が正常に終了したかどうか
     is_optimize_succeed: bool
 
@@ -78,76 +91,105 @@ class WallStatusValues:
     optimize_message: str
 
 
-def _get_heat_balance(matrix_temp: np.zeros(5), parm: Parameters, calc_mode_h_cv: str, calc_mode_h_rv: str,
-                     h_out: float, h_in: float) -> np.zeros(5):
+def _get_heat_balance(
+        matrix_temp: np.zeros(5),
+        theta_e: float,
+        theta_r: float,
+        j_surf: float,
+        a_surf: float,
+        c_1: float,
+        c_2: float,
+        l_h: float,
+        l_w: float,
+        l_d: float,
+        angle: float,
+        v_a: float,
+        eps1: float,
+        eps2: float,
+        calc_mode_h_cv: str,
+        calc_mode_h_rv: str,
+        h_out: float,
+        h_in: float
+    ) -> np.zeros(5):
     """
     熱収支式を解く関数
 
-    :param matrix_temp: 各部温度計算結果 (5,1), degC
-    :param parm:        計算条件パラメータ群
-    :param calc_mode_h_cv:   対流熱伝達率の計算モード
-    :param calc_mode_h_rv:   放射熱伝達率の計算モード
-    :param h_out:       室外側総合熱伝達率, W/(m2・K)
-    :param h_in:        室内側総合熱伝達率, W/(m2・K)
-    :return: 　         各層の熱収支, W/m2
+    Args:
+        matrix_temp: the temperature of the points below, degrees
+            0: the temperature on the exterior surface
+            1: the temperature on the exterior side surface facing the ventilation layer
+            2: the temperature on the interior side surface facing the ventilation layer
+            3: the temperature on the interior surface
+            4: the temperature of the air in the ventilation layer
+        theta_e: the outdoor temperature, degrees
+        theta_r: the indoor temperature, degrees
+        j_surf: the solar irradiance on the exterior surface, W/m2
+        a_surf: the solar absorption ratio on the external surface, -
+        c_1: the thermal conductance of the outside material, W/m2K
+        c_2: the thermal conductance of the inside material, W/m2K
+        l_h: the length of the ventilation layer, m
+        l_w: the width of the ventilation layer, m
+        l_d: the thickness of the ventilation layer, m
+        angle: the angle of the ventilation layer, degrees
+        v_a: the mean air velocity of the ventilation layer, m/s
+        eps1: the emissivity of the surface 1 facing the ventilation layer
+        eps2: the emissivity of the surface 2 facing the ventilation layer
+        calc_mode_h_cv: 対流熱伝達率の計算モード
+        calc_mode_h_rv: 放射熱伝達率の計算モード
+        h_out: 室外側総合熱伝達率, W/(m2・K)
+        h_in: 室内側総合熱伝達率, W/(m2・K)
+    Returns:
+        各層の熱収支, W/m2
     """
 
-    # 相当外気温度を計算
-    theta_SAT = parm.theta_e + (parm.a_surf * parm.J_surf) / h_out
+    # SAT temp, degrees
+    theta_sat = theta_e + (a_surf * j_surf) / h_out
 
-    # 行列の初期化
-    matrix_coeff = np.zeros(shape=(5, 5))
-    matrix_const = np.zeros(5)
-
-    # 通気層内の表面温度を設定
+    # the temperature of the surfaces facing the ventilation layer, degrees
     theta_1 = matrix_temp[1]
     theta_2 = matrix_temp[2]
+    theta_4 = matrix_temp[4]
 
-    # 対流熱伝達率の計算
-    h_cv = heat_transfer_coefficient.get_h_cv(calc_mode_h_cv, parm.v_a, theta_1, theta_2, parm.angle, parm.l_h, parm.l_d)
+    # the convective heat transfer coefficient, W/m2K
+    h_cv = htc.get_h_cv(calc_mode_h_cv, v_a, theta_1, theta_2, angle, l_h, l_d)
 
-    # 有効放射率の計算
-    effective_emissivity = heat_transfer_coefficient.get_e(parm.emissivity_1, parm.emissivity_2)
+    # the effective emissivity, -
+    eps_eff = htc.get_e(eps1=eps1, eps2=eps2)
 
-    # 放射熱伝達率の計算
-    h_rv = heat_transfer_coefficient.get_h_rv(effective_emissivity, calc_mode_h_rv, theta_1, theta_2)
+    # the radiative heat transfer coefficient, W/m2K
+    h_rv = htc.get_h_rv(eps_eff, calc_mode_h_rv, theta_1, theta_2)
 
-    # 通気風量の計算
-    v_vent = parm.v_a * parm.l_d * parm.l_w
+    # the ventilation air volume, m3/s
+    v_vent = v_a * l_d * l_w
 
     # 通気層の平均空気温度の計算用の値を設定
-    beta = 0.0
-    if parm.v_a > 0.0:
-        beta = (2 * h_cv * parm.l_w) / (get_c_air() * get_rho_air(matrix_temp[4]) * v_vent)
-
-    # 行列に値を設定
-    matrix_coeff[0][0] = h_out + parm.C_1
-    matrix_coeff[0][1] = -parm.C_1
-    matrix_coeff[1][0] = parm.C_1
-    matrix_coeff[1][1] = -(h_cv + h_rv + parm.C_1)
-    matrix_coeff[1][2] = h_rv
-    matrix_coeff[1][4] = h_cv
-    matrix_coeff[2][1] = h_rv
-    matrix_coeff[2][2] = -(h_cv + h_rv + parm.C_2)
-    matrix_coeff[2][3] = parm.C_2
-    matrix_coeff[2][4] = h_cv
-    matrix_coeff[3][2] = parm.C_2
-    matrix_coeff[3][3] = -(h_in + parm.C_2)
-    matrix_coeff[4][4] = -1.0
-    matrix_const[0] = h_out * theta_SAT
-    matrix_const[3] = -h_in * parm.theta_r
-
-    if parm.v_a > 0.0:
-        matrix_coeff[4][1] = (1.0 + 1.0 / parm.l_h * 1.0 / beta * (math.exp(-beta * parm.l_h) - 1)) / 2
-        matrix_coeff[4][2] = (1.0 + 1.0 / parm.l_h * 1.0 / beta * (math.exp(-beta * parm.l_h) - 1)) / 2
-        matrix_const[4] = 1.0 / parm.l_h * 1.0 / beta * (math.exp(-beta * parm.l_h) - 1) * parm.theta_e
+    if v_a > 0.0:
+        beta = (2 * h_cv * l_w) / (get_c_air() * get_rho_air(theta_4) * v_vent)
+        a41 = (1.0 + 1.0 / l_h * 1.0 / beta * (math.exp(-beta * l_h) - 1)) / 2
+        a42 = (1.0 + 1.0 / l_h * 1.0 / beta * (math.exp(-beta * l_h) - 1)) / 2
+        b4 = 1.0 / l_h * 1.0 / beta * (math.exp(-beta * l_h) - 1) * theta_e
     else:
-        matrix_coeff[4][1] = 0.5
-        matrix_coeff[4][2] = 0.5
-        matrix_const[4] = 0.0
+        a41 = 0.5
+        a42 = 0.5
+        b4 = 0.0
+
+    # the matrix equation
+    # A \theta = B
+
+    # A
+    a = np.array([
+        [h_out + c_1, -c_1, 0.0, 0.0, 0.0],
+        [c_1, -(h_cv + h_rv + c_1), h_rv, 0.0, h_cv],
+        [0.0, h_rv, -(h_cv + h_rv + c_2), c_2, h_cv],
+        [0.0, 0.0, c_2, -(h_in + c_2), 0.0],
+        [0.0, a41, a42, 0.0, -1.0]
+    ])
+
+    # B
+    b = np.array([h_out * theta_sat, 0.0, 0.0, -h_in * theta_r, b4])
 
     # 熱収支を計算
-    q_balance = np.matmul(matrix_coeff, matrix_temp) - matrix_const
+    q_balance = np.matmul(a, matrix_temp) - b
 
     return q_balance
 
@@ -165,159 +207,203 @@ def get_wall_status_values(parm: Parameters, calc_mode_h_cv: str, calc_mode_h_rv
     :return: 通気層の状態値（通気層の各層の温度、各層の熱収支、対流熱伝達率、放射熱伝達率、最適化の終了ステータス、終了メッセージ）
     """
 
+    # the outdoor temperature, degrees
+    theta_e = parm.theta_e
+
+    # the indoor temperature, degrees
+    theta_r = parm.theta_r
+
+    # the solar irradiance on the exterior surface, W/m2
+    j_surf = parm.J_surf
+
+    # the solar absorption ratio on the exterior surface, -
+    a_surf = parm.a_surf
+
+    # the thermal conductance of the outside material, W/m2K
+    c_1 = parm.C_1
+
+    # the thermal conductance of the inside material, W/m2K
+    c_2 = parm.C_2
+
+    # the length of the ventilation layer, m
+    l_h = parm.l_h
+
+    # the width of the ventilation layer, m
+    l_w = parm.l_w
+
+    # the thickness of the ventilation layer, m
+    l_d = parm.l_d
+
+    # the angle of the ventilation layer, degrees
+    angle = parm.angle
+
+    # the mean air velocity of the ventilation layer, m/s
+    v_a = parm.v_a
+
+    # the emissivity of the surface 1 facing the ventilation layer
+    eps1 = parm.emissivity_1
+
+    # the emissivity of the surface 2 facing the ventilation layer
+    eps2 = parm.emissivity_2
+
     # 通気層内の各点の温度の初期値を設定
     matrix_temp = np.zeros(5)
-    matrix_temp[0] = parm.theta_e
-    matrix_temp[1] = parm.theta_e + (parm.theta_r - parm.theta_e) / (4 * 3)
-    matrix_temp[2] = parm.theta_e + (parm.theta_r - parm.theta_e) / (4 * 2)
-    matrix_temp[3] = parm.theta_e + (parm.theta_r - parm.theta_e) / (4 * 1)
+    matrix_temp[0] = theta_e
+    matrix_temp[1] = theta_e + (theta_r - theta_e) / (4 * 3)
+    matrix_temp[2] = theta_e + (theta_r - theta_e) / (4 * 2)
+    matrix_temp[3] = theta_e + (theta_r - theta_e) / (4 * 1)
     matrix_temp[4] = (matrix_temp[1] + matrix_temp[2]) / 2
 
-    # 通気層内の各層の熱収支式の最適解を収束計算で求める
-    optimize_result = optimize.root(fun=_get_heat_balance, x0=matrix_temp, args=(parm, calc_mode_h_cv, calc_mode_h_rv, h_out, h_in), method='lm')
+    def f(matrix_temp):
+        return _get_heat_balance(
+            matrix_temp=matrix_temp, theta_e=theta_e, theta_r=theta_r, j_surf=j_surf, a_surf=a_surf,
+            c_1=c_1, c_2=c_2, l_h=l_h, l_w=l_w, l_d=l_d,
+            angle=angle, v_a=v_a, eps1=eps1, eps2=eps2,
+            calc_mode_h_cv=calc_mode_h_cv, calc_mode_h_rv=calc_mode_h_rv, h_out=h_out, h_in=h_in)
 
-    # 収束した場合は各層の状態値を設定、収束しなかった場合はすべて無効（Nan）とする
+
+    # 通気層内の各層の熱収支式の最適解を収束計算で求める
+    optimize_result = optimize.root(fun=f, x0=matrix_temp, method='lm')
+
     if optimize_result.success:
 
-        # 熱収支式が成り立つときの各層の温度を取得
+        # the temperatures, degrees
         matrix_temp_fixed = optimize_result.x
 
-        # 各層の熱収支を計算
-        heat_balance = _get_heat_balance(matrix_temp_fixed, parm, calc_mode_h_cv, calc_mode_h_rv, h_out, h_in)
+        # the heat balance, W/m2
+        heat_balance = f(matrix_temp=matrix_temp_fixed)
 
-        # 対流熱伝達率の計算
-        h_cv = heat_transfer_coefficient.get_h_cv(calc_mode=calc_mode_h_cv, v_a=parm.v_a, theta_1=matrix_temp_fixed[1], theta_2=matrix_temp_fixed[2], angle=parm.angle, l_h=parm.l_h, l_d=parm.l_d)
+        # the convective heat transfer coefficient, W/m2K
+        h_cv = htc.get_h_cv(calc_mode=calc_mode_h_cv, v_a=v_a, theta_1=matrix_temp_fixed[1], theta_2=matrix_temp_fixed[2], angle=angle, l_h=l_h, l_d=l_d)
 
-        # 有効放射率の計算
-        effective_emissivity = heat_transfer_coefficient.get_e(eps1=parm.emissivity_1, eps2=parm.emissivity_2)
+        # the effective emissivity
+        eps_eff = htc.get_e(eps1=eps1, eps2=eps2)
 
-        # 放射熱伝達率の計算
-        h_rv = heat_transfer_coefficient.get_h_rv(eps_eff=effective_emissivity, calc_mode=calc_mode_h_rv, theta_1=matrix_temp_fixed[1], theta_2=matrix_temp_fixed[2])
+        # the radiative heat transfer coefficient, W/m2K
+        h_rv = htc.get_h_rv(eps_eff=eps_eff, calc_mode=calc_mode_h_rv, theta_1=matrix_temp_fixed[1], theta_2=matrix_temp_fixed[2])
+
+        # the heat flow from the outside(inclued solar irradiance) to the exterior surface, W/m2
+        q_flow_out = _get_q_flow_out(theta_e=theta_e, a_surf=a_surf, j_surf=j_surf, theta_0=matrix_temp_fixed[0], h_out=h_out)
+
+        # the heat flow from the exterior surface to the surface of exterior side facing the ventilation layer, W/m2
+        q_flow_em = _get_q_flow_em(theta_0=matrix_temp_fixed[0], theta_1=matrix_temp_fixed[1], c_1=c_1)
+
+        # the exhausted heat flow from the ventilation layer, W/m2
+        q_flow_exhaust = _get_q_flow_exhaust(v_a=v_a, l_d=l_d, l_w=l_w, l_h=l_h, theta_1=matrix_temp_fixed[1], theta_2=matrix_temp_fixed[2], theta_4=matrix_temp_fixed[4], theta_as_in=parm.theta_e, h_cv=h_cv)
+
+        # the heat flow to the inside, W/m2
+        q_flow_in = _get_q_flow_in(theta_3=matrix_temp_fixed[3], theta_r=theta_r, h_in=h_in)
+
+        return WallStatusValues(
+            matrix_temp=matrix_temp_fixed,
+            matrix_heat_balance=heat_balance,
+            h_cv=h_cv,
+            h_rv=h_rv,
+            q_flow_out=q_flow_out,
+            q_flow_em=q_flow_em,
+            q_flow_exhaust=q_flow_exhaust,
+            q_flow_in=q_flow_in,
+            is_optimize_succeed=optimize_result.success,
+            optimize_status=optimize_result.status,
+            optimize_message=optimize_result.message
+        )
+
+    # If the optimized result is false, the return values are set to be np.nan.
+    else:
+
+        return WallStatusValues(
+            matrix_temp=np.full(5, np.nan),
+            matrix_heat_balance=np.full(5, np.nan),
+            h_cv=np.nan,
+            h_rv=np.nan,
+            q_flow_out=np.nan,
+            q_flow_em=np.nan,
+            q_flow_exhaust=np.nan,
+            q_flow_in=np.nan,
+            is_optimize_succeed=optimize_result.success,
+            optimize_status=optimize_result.status,
+            optimize_message=optimize_result.message
+        )
+
+
+def _get_q_flow_out(theta_e: float, a_surf: float, j_surf: float, theta_0: float, h_out: float) -> float:
+    """Calculate the heat flow from the outside to the exterior surface
+
+    Args:
+        theta_e: the outdoor temperature, degrees
+        a_surf: the solar absorption ratio on the exterior surface, -
+        j_surf: the solar irradiance on the exterior surface, W/m2
+        theta_0: the temperature on the exterior surface, degrees
+        h_out: the overall heat transfer coefficient, W/m2K
+    Returns
+        the heat flow from the outside to the exterior surface, W/m2
+    """
+
+    # SAT temperature, degrees
+    theta_sat = theta_e + (a_surf * j_surf) / h_out
+
+    return h_out * (theta_sat - theta_0)
+
+
+def _get_q_flow_em(theta_0: float, theta_1: float, c_1: float) -> float:
+    """Calculate the heat flow from the exterior surface to the surface of exterior side facing the ventilation layer
+
+    Args:
+        theta_0: the temperature on the exterior surface, degrees
+        theta_1: the temperature on the surface of the exterior side facing the ventilation layer, degrees
+        c_1: the thermal conductance of the outside material, W/m2K
+    Returns:
+        the heat flow from the exterior surface to the surface of exterior side facing the ventilation layer, W/m2
+    """
+
+    return c_1 * (theta_0 - theta_1)
+
+
+def _get_q_flow_exhaust(v_a: float, l_d: float, l_w: float, l_h: float, theta_1: float, theta_2: float, theta_4: float, theta_as_in: float, h_cv: float) -> float:
+    """Calculate the exhausted heat flow from the ventilation layer.
+
+    Args:
+        v_a: the mean air velocity of the ventilation layer, m/s
+        l_d: the thickness of the ventilation layer, m
+        l_w: the width of the ventilation layer, m
+        l_h: the length of the ventilation layer, m
+        theta_1: the temperature on the surface of the exterior side facing the ventilation layer, degrees
+        theta_2: the temperature on the surface of the interior side facing the ventilation layer, degrees
+        theta_4: the air temperature of the ventilation layer, degrees
+        theta_as_in: the inlet temperature of the ventilation layer, degrees
+            this temperature is equal to the outdoor air temperature, degrees
+        h_cv: the convective heat transfer coefficient, W/m2K
+    Returns:
+        the exhausted heat flow from the ventilation layer, W/m2
+    """
+
+    if v_a > 0.0:
+
+        # the air flow of the ventilation layer, m3/s
+        v_vent = v_a * l_d * l_w
+
+        ec = math.exp(- 2.0 * h_cv * l_w * l_h / (get_c_air() * get_rho_air(theta_4) * v_vent))
+
+        # the air temperature at the outlet of the ventilation layer, degrees
+        theta_out = (1.0 - ec) * (theta_1 + theta_2) / 2.0 + ec * theta_as_in
+
+        return get_c_air() * get_rho_air(theta_4) * v_vent * (theta_out - theta_as_in) / (l_w * l_h)
 
     else:
-        matrix_temp_fixed = np.full(5, np.nan)
-        heat_balance = np.full(5, np.nan)
-        h_cv = np.nan
-        h_rv = np.nan
 
-    return WallStatusValues(matrix_temp=matrix_temp_fixed, matrix_heat_balance=heat_balance, h_cv=h_cv, h_rv=h_rv,
-                            is_optimize_succeed=optimize_result.success, optimize_status=optimize_result.status,
-                            optimize_message=optimize_result.message
-                            )
-
-
-def get_heat_flow_0(matrix_temp: np.ndarray, param: Parameters, h_out: float) -> float:
-    """
-    各部温度から屋外側表面熱流を計算する
-
-    :param matrix_temp: 各部温度計算結果 (5,1), degC
-    :param param:       計算条件パラメータ群
-    :param h_out:       室外側総合熱伝達率, W/(m2・K)
-    :return:            屋外側表面熱流, W/m2
-    """
-
-    # 相当外気温度を計算
-    theta_sat = param.theta_e + (param.a_surf * param.J_surf) / h_out
-
-    return h_out * (theta_sat - matrix_temp[0])
-
-
-def _get_heat_flow_1(matrix_temp: np.ndarray, param: Parameters) -> float:
-    """
-    各部温度から外装材伝導熱量を計算する
-
-    :param matrix_temp: 各部温度計算結果 (5,1), degC
-    :param param:       計算条件パラメータ群
-    :return:            外装材伝導熱量, W/m2
-    """
-
-    return param.C_1 * (matrix_temp[0] - matrix_temp[1])
-
-
-def get_heat_flow_exhaust(matrix_temp: np.ndarray, param: Parameters, theta_as_in: float, h_cv: float) -> float:
-    """
-    通気層からの排気熱量の計算
-
-    :param matrix_temp: 各部温度計算結果 (5,1), degC
-    :param param:       計算条件パラメータ群
-    :param theta_as_in: 通気層への流入温度=外気温度, degC
-    :param h_cv:        通気層の対流熱伝達率, W/m2K
-    :return:            通気層の排気熱量, W/m2
-    """
-
-    if param.v_a > 0.0:
-
-        # 通気風量の計算
-        v_vent = param.v_a * param.l_d * param.l_w
-
-        ec = math.exp(- 2.0 * h_cv * param.l_w * param.l_h / (get_c_air() * get_rho_air(matrix_temp[4]) * v_vent))
-
-        # 出口温度の計算
-        theta_out = (1.0 - ec) * (matrix_temp[1] + matrix_temp[2]) / 2.0 + ec * theta_as_in
-
-        # 通気層の排気熱量
-        return get_c_air() * get_rho_air(matrix_temp[4]) * v_vent * (theta_out - theta_as_in) / (param.l_w * param.l_h)
-
-    else:
         return 0.0
 
 
-def _get_heat_flow_convect_vent_layer(matrix_temp: np.ndarray, param: Parameters, h_cv: float) -> float:
-    """
-    通気層内表面から通気層空気への対流熱量
+def _get_q_flow_in(theta_3: float, theta_r: float, h_in: float) -> float:
+    """Calculate the heat flow to the inside.
 
-    :param matrix_temp: 各部温度計算結果 (5,1), degC
-    :param param:       計算条件パラメータ群
-    :param h_cv:        通気層対流熱伝達率, W/m2K
-    :return:            通気層内表面から通気層空気への対流熱量、W/m2
-    """
-
-    return 2.0 * h_cv * ((matrix_temp[1] + matrix_temp[2]) / 2.0 - matrix_temp[4])
-
-
-def _get_heat_flow_2(matrix_temp: np.ndarray, h_cv: float, h_rv: float) -> tuple:
-    """
-    通気層熱伝達量の計算
-
-    :param matrix_temp: 各部温度計算結果 (5,1), degC
-    :param h_cv:        通気層対流熱伝達率, W/m2K
-    :param h_rv:        通気層放射熱伝達率, W/m2K
-    :return:            通気層熱伝達量, W/m2
+    Args:
+        theta_3: the surface temperature of the inside(room), degrees
+        theta_r: the room temperature, degrees
+        h_in: the overall heat transfer coefficient, W/m2K
+    Returns:
+        the heat flow to the inside., W/m2
     """
 
-    # 熱伝達量
-    return (h_cv * (matrix_temp[1] - matrix_temp[2]), h_rv * (matrix_temp[1] - matrix_temp[2]))
+    return h_in * (theta_3 - theta_r)
 
-
-def _get_heat_flow_3(matrix_temp: np.ndarray, param: Parameters) -> float:
-    """
-    各部温度から断熱材+内装材伝導熱量を計算する
-
-    :param matrix_temp: 各部温度計算結果 (5,1), degC
-    :param param:       計算条件パラメータ群
-    :return:            断熱材+内装材伝導熱量, W/m2
-    """
-
-    return param.C_2 * (matrix_temp[2] - matrix_temp[3])
-
-
-def get_heat_flow_4(matrix_temp: np.ndarray, param: Parameters, h_in: float) -> float:
-    """
-    各部温度から室内表面熱流を計算する
-
-    :param matrix_temp: 各部温度計算結果 (5,1), degC
-    :param param:       計算条件パラメータ群
-    :param h_in:        室内側総合熱伝達率, W/(m2・K)
-    :return:            断熱材+内装材伝導熱量, W/m2
-    """
-
-    return h_in * (matrix_temp[3] - param.theta_r)
-
-
-# デバッグ用
-# parm_1: Parameters = Parameters(-20, 20, 500, 1.0, 50.25, 2.55, 3.0, 0.05, 0.05, 45.0, 0.5, 0.45, 0.9, 0.9)
-# status = get_wall_status_values(parm_1, h_out=25.0, h_in=9.0)
-# print(status.is_optimize_succeed)
-# print(status.optimize_status)
-# print(status.optimize_message)
-# print(status.matrix_heat_balance)

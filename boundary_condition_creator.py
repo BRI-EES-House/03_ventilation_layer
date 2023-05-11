@@ -83,7 +83,8 @@ def calc_ventilation_wall_surface_temperatures(angle: float, theta_e: float, j_s
     :param theta_e:     外気温度, degree
     :param j_surf:      日射量, W/m2
     :param season:      季節（'winter' or 'summer'）
-    :return: 通気層内の面1、面2の表面温度, degree
+    Returns:
+        通気層内の面1、面2の表面温度, degrees
     """
 
     # 固定値の設定
@@ -115,16 +116,28 @@ def calc_ventilation_wall_surface_temperatures(angle: float, theta_e: float, j_s
     # 通気層の状態値を取得
     status = vw.get_wall_status_values(parm, calc_mode_h_cv, calc_mode_h_rv, h_out, h_in)
 
-    # 屋外表面熱流
-    q_outer_flow = vw.get_heat_flow_0(matrix_temp=status.matrix_temp, param=parm, h_out=h_out)
+    # the temperature at the eace points
+    matrix_temp = status.matrix_temp
 
-    # 通気層からの排気熱量
-    q_exhaust_flow = vw.get_heat_flow_exhaust(matrix_temp=status.matrix_temp, param=parm, theta_as_in=parm.theta_e, h_cv=status.h_cv)
+    # the surface temperature 1, degrees
+    theta_1_surf = matrix_temp[1]
 
-    # 室内表面熱流
-    q_inner_flow = vw.get_heat_flow_4(matrix_temp=status.matrix_temp, param=parm, h_in=h_in)
+    # the surface temperature 2, degrees
+    theta_2_surf = matrix_temp[2]
 
-    return status, q_outer_flow, q_exhaust_flow, q_inner_flow
+    # the air temperature in the ventilation layer, degrees
+    theta_as_ave = matrix_temp[4]
+
+    # the heat flow from the outside(include solar irradiance) to the exterior surface, W/m2
+    q_outer_flow = status.q_flow_out
+
+    # the exhausted heat flow from the ventilation layer, W/m2
+    q_exhaust_flow = status.q_flow_exhaust
+
+    # the heat flow to the inside, W/m2
+    q_inner_flow = status.q_flow_in
+
+    return theta_1_surf, theta_2_surf, theta_as_ave, q_outer_flow, q_exhaust_flow, q_inner_flow
 
 
 def add_ventilation_wall_temperatures_and_heat_flow(target_df: pd.DataFrame) -> pd.DataFrame:
@@ -143,12 +156,12 @@ def add_ventilation_wall_temperatures_and_heat_flow(target_df: pd.DataFrame) -> 
     q_inner_flow = []
 
     for row in target_df.itertuples():
-        status, buf_q_outer_flow, buf_q_exhaust_flow, buf_q_inner_flow = calc_ventilation_wall_surface_temperatures(
+        _theta_1_surf, _theta_2_surf, _theta_as_ave, buf_q_outer_flow, buf_q_exhaust_flow, buf_q_inner_flow = calc_ventilation_wall_surface_temperatures(
             angle=row.angle, theta_e=row.theta_e_ave, j_surf=row.j_surf_ave, season=row.season
         )
-        theta_1_surf.append(status.matrix_temp[1])
-        theta_2_surf.append(status.matrix_temp[2])
-        theta_as_ave.append(status.matrix_temp[4])
+        theta_1_surf.append(_theta_1_surf)
+        theta_2_surf.append(_theta_2_surf)
+        theta_as_ave.append(_theta_as_ave)
         q_outer_flow.append(buf_q_outer_flow)
         q_exhaust_flow.append(buf_q_exhaust_flow)
         q_inner_flow.append(buf_q_inner_flow)

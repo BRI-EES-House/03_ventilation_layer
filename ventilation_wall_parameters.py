@@ -1,6 +1,8 @@
 import itertools
 import pandas as pd
 import numpy as np
+from typing import List, Tuple
+
 import ventilation_layer.global_number as global_number
 import ventilation_wall as vw
 import ventilation_wall_simplified as vws
@@ -18,7 +20,7 @@ class Log:
         print("LOG: %s" % msg)
 
 
-def get_parameter_list() -> object:
+def get_parameter_list() -> List[Tuple[float]]:
     """
     複数のパラメータの総当たりの組み合わせ（直積）のリストを作成する
     :param なし
