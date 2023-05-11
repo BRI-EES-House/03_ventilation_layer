@@ -95,26 +95,50 @@ def calc_ventilation_wall_surface_temperatures(angle: float, theta_e: float, j_s
     calc_mode_h_cv = 'detailed'
     calc_mode_h_rv = 'detailed'
 
-    # パラメータを設定
-    parm = vw.Parameters(
-        theta_e=theta_e,
-        theta_r=20.0 if season == 'winter' else 27.0,
-        J_surf=j_surf,
-        a_surf=np.array([0.0, np.median([0.0, 1.0]), 1.0], dtype=float).mean(),
-        C_1=np.array([0.5, np.median([0.5, 100.0]), 100.0], dtype=float).mean(),
-        C_2=np.array([0.1, np.median([0.1, 5.0]), 5.0], dtype=float).mean(),
-        l_h=np.array([3.0, np.median([3.0, 12.0]), 12.0], dtype=float).mean(),
-        l_w=np.array([0.05, np.median([0.05, 10.0]), 10.0], dtype=float).mean(),
-        l_d=np.array([0.05, np.median([0.05, 0.3]), 0.3], dtype=float).mean(),
-        angle=angle,
-        v_a=np.array([0.0, np.median([0.0, 1.0]), 1.0], dtype=float).mean(),
-        l_s=0.45,
-        emissivity_1=0.9,
-        emissivity_2=np.array([0.1, np.median([0.1, 0.9]), 0.9], dtype=float).mean()
-    )
+    # the room temperature, degrees
+    theta_r = 20.0 if season == 'winter' else 27.0
+
+    # the solar absorption ratio on the exterior surface, -
+    a_surf = np.array([0.0, np.median([0.0, 1.0]), 1.0], dtype=float).mean()
+
+    # the thermal conductance of the outside material, W/m2K
+    c_1 = np.array([0.5, np.median([0.5, 100.0]), 100.0], dtype=float).mean()
+
+    # the thermal conductance of the inside material, W/m2K
+    c_2 = np.array([0.1, np.median([0.1, 5.0]), 5.0], dtype=float).mean()
+
+    # the length of the ventilation layer, m
+    l_h = np.array([3.0, np.median([3.0, 12.0]), 12.0], dtype=float).mean()
+
+    # the width of the ventilation layer, m
+    l_w = np.array([0.05, np.median([0.05, 10.0]), 10.0], dtype=float).mean()
+
+    # the thickness of the ventilation layer, m
+    l_d = np.array([0.05, np.median([0.05, 0.3]), 0.3], dtype=float).mean()
+
+    # the mean air velocity of the ventilation layer, m/s
+    v_a = np.array([0.0, np.median([0.0, 1.0]), 1.0], dtype=float).mean()
+
+    # the emissivity of the surface 2 facing the ventilation layer, -
+    emissivity_2=np.array([0.1, np.median([0.1, 0.9]), 0.9], dtype=float).mean()
 
     # 通気層の状態値を取得
-    status = vw.get_wall_status_values(parm, calc_mode_h_cv, calc_mode_h_rv, h_out, h_in)
+    status = vw.get_wall_status_values(
+        theta_e=theta_e,
+        theta_r=theta_r,
+        j_surf=j_surf,
+        a_surf=a_surf,
+        c_1=c_1,
+        c_2=c_2,
+        l_h=l_h,
+        l_w=l_w,
+        l_d=l_d,
+        angle=angle,
+        v_a=v_a,
+        eps_1=0.9,
+        eps_2=emissivity_2,
+        calc_mode_h_cv=calc_mode_h_cv, calc_mode_h_rv=calc_mode_h_rv, h_out=h_out, h_in=h_in
+    )
 
     # the temperature at the eace points
     matrix_temp = status.matrix_temp

@@ -10,47 +10,46 @@ from ventilation_layer.global_number import get_c_air, get_rho_air
 @dataclass
 class Parameters:
 
-    # 外気温度, degree C
+    # the outdoor temperature, degree C
     theta_e: float
 
-    # 室内温度,　degree C
+    # the indoor temperature, degree C
     theta_r: float
 
-    # 外気側表面に入射する日射量, W/m2
+    # the solar irradiance on the exterior surface, W/m2
     J_surf: float
 
-    # 外気側表面日射吸収率
+    # the solar absorption ratio on the exterior surface, -
     a_surf: float
 
-    # 外気側部材の熱コンダクタンス,W/(m2・K)
+    # the thermal conductance of the outside material, W/m2K
     C_1: float
 
-    # 室内側部材の熱コンダクタンス, W/(m2・K)
+    # the thermal conductance of the inside material, W/m2K
     C_2: float
 
-    # 通気層の長さ, m
+    # the length of the ventilation layer, m
     l_h: float
 
-    # 通気層の幅, m
+    # the width of the ventilation layer, m
     l_w: float
 
-    # 通気層の厚さ, m
+    # the thickness of the ventilation layer, m
     l_d: float
 
-    # 通気層の傾斜角, degree
+    # the angle of the ventilation layer, degrees
     angle: float
 
-    # 通気層の平均風速, m/s
-    # Note: 通気層の風速は計算により求める方法もあるが、ひとまず与条件とする
+    # the mean air velocity of the ventilation layer, m/s
     v_a: float
 
     # 通気胴縁または垂木の間隔, m
     l_s: float
 
-    # 通気層に面する面1の放射率, -
+    # the emissivity of the surface 1 facing the ventilation layer, -
     emissivity_1: float
 
-    # 通気層に面する面2の放射率, -
+    # the emissivity of the surface 2 facing the ventilation layer, -
     emissivity_2: float
 
 
@@ -194,57 +193,49 @@ def _get_heat_balance(
     return q_balance
 
 
-def get_wall_status_values(parm: Parameters, calc_mode_h_cv: str, calc_mode_h_rv: str,
-                           h_out: float, h_in: float) -> WallStatusValues:
+def get_wall_status_values(
+        theta_e: float,
+        theta_r: float,
+        j_surf: float,
+        a_surf: float,
+        c_1: float,
+        c_2: float,
+        l_h: float,
+        l_w: float,
+        l_d: float,
+        angle: float,
+        v_a: float,
+        eps_1: float,
+        eps_2: float,
+        calc_mode_h_cv: str,
+        calc_mode_h_rv: str,
+        h_out: float,
+        h_in: float
+    ) -> WallStatusValues:
+    """Calculation of the status(temperature, heat flow, etc.) of the ventilation layer.
+
+    Args:
+        theta_e: the outdoor temperature, degrees
+        theta_r: the indoor temperature, degrees
+        j_surf: the solar irradiance on the exterior surface, W/m2
+        a_surf: the solar absorption ratio on the exterior surface, -
+        c_1: the thermal conductance of the outside material, W/m2K
+        c_2: the thermal conductance of the inside material, W/m2K
+        l_h: the length of the ventilation layer, m
+        l_w: the width of the ventilation layer, m
+        l_d: the thickness of the ventilation layer, m
+        angle: the angle of the ventilation layer, degrees
+        v_a: the mean air velocity of the ventilation layer, m/s
+        emissivity_1: the emissivity of the surface 1 facing the ventilation layer, -
+        emissivity_2: the emissivity of the surface 2 facing the ventilation layer, -
+        calc_mode_h_cv: the calculation mode for the convective heat transfer coefficient
+        calc_mode_h_rv: the calculation mode for the radiative heat transfer coefficient
+        h_out: the overall heat transfer coefficient of the inside, W/m2K
+        h_in: the overall heat transfer coefficient of the outside, W/m2K
+    Returns:
+        the status(temperature, heat flow, etc.) of the ventilation layer
+        通気層の状態値（通気層の各層の温度、各層の熱収支、対流熱伝達率、放射熱伝達率、最適化の終了ステータス、終了メッセージ）
     """
-    通気層の状態値を取得する
-
-    :param parm: 計算条件パラメータ群
-    :param calc_mode_h_cv:   対流熱伝達率の計算モード
-    :param calc_mode_h_rv:   放射熱伝達率の計算モード
-    :param h_out: 室外側総合熱伝達率, W/(m2・K)
-    :param h_in:  室内側総合熱伝達率, W/(m2・K)
-    :return: 通気層の状態値（通気層の各層の温度、各層の熱収支、対流熱伝達率、放射熱伝達率、最適化の終了ステータス、終了メッセージ）
-    """
-
-    # the outdoor temperature, degrees
-    theta_e = parm.theta_e
-
-    # the indoor temperature, degrees
-    theta_r = parm.theta_r
-
-    # the solar irradiance on the exterior surface, W/m2
-    j_surf = parm.J_surf
-
-    # the solar absorption ratio on the exterior surface, -
-    a_surf = parm.a_surf
-
-    # the thermal conductance of the outside material, W/m2K
-    c_1 = parm.C_1
-
-    # the thermal conductance of the inside material, W/m2K
-    c_2 = parm.C_2
-
-    # the length of the ventilation layer, m
-    l_h = parm.l_h
-
-    # the width of the ventilation layer, m
-    l_w = parm.l_w
-
-    # the thickness of the ventilation layer, m
-    l_d = parm.l_d
-
-    # the angle of the ventilation layer, degrees
-    angle = parm.angle
-
-    # the mean air velocity of the ventilation layer, m/s
-    v_a = parm.v_a
-
-    # the emissivity of the surface 1 facing the ventilation layer
-    eps1 = parm.emissivity_1
-
-    # the emissivity of the surface 2 facing the ventilation layer
-    eps2 = parm.emissivity_2
 
     # 通気層内の各点の温度の初期値を設定
     matrix_temp = np.zeros(5)
@@ -258,7 +249,7 @@ def get_wall_status_values(parm: Parameters, calc_mode_h_cv: str, calc_mode_h_rv
         return _get_heat_balance(
             matrix_temp=matrix_temp, theta_e=theta_e, theta_r=theta_r, j_surf=j_surf, a_surf=a_surf,
             c_1=c_1, c_2=c_2, l_h=l_h, l_w=l_w, l_d=l_d,
-            angle=angle, v_a=v_a, eps1=eps1, eps2=eps2,
+            angle=angle, v_a=v_a, eps1=eps_1, eps2=eps_2,
             calc_mode_h_cv=calc_mode_h_cv, calc_mode_h_rv=calc_mode_h_rv, h_out=h_out, h_in=h_in)
 
 
@@ -277,7 +268,7 @@ def get_wall_status_values(parm: Parameters, calc_mode_h_cv: str, calc_mode_h_rv
         h_cv = htc.get_h_cv(calc_mode=calc_mode_h_cv, v_a=v_a, theta_1=matrix_temp_fixed[1], theta_2=matrix_temp_fixed[2], angle=angle, l_h=l_h, l_d=l_d)
 
         # the effective emissivity
-        eps_eff = htc.get_e(eps1=eps1, eps2=eps2)
+        eps_eff = htc.get_e(eps1=eps_1, eps2=eps_2)
 
         # the radiative heat transfer coefficient, W/m2K
         h_rv = htc.get_h_rv(eps_eff=eps_eff, calc_mode=calc_mode_h_rv, theta_1=matrix_temp_fixed[1], theta_2=matrix_temp_fixed[2])
@@ -289,7 +280,7 @@ def get_wall_status_values(parm: Parameters, calc_mode_h_cv: str, calc_mode_h_rv
         q_flow_em = _get_q_flow_em(theta_0=matrix_temp_fixed[0], theta_1=matrix_temp_fixed[1], c_1=c_1)
 
         # the exhausted heat flow from the ventilation layer, W/m2
-        q_flow_exhaust = _get_q_flow_exhaust(v_a=v_a, l_d=l_d, l_w=l_w, l_h=l_h, theta_1=matrix_temp_fixed[1], theta_2=matrix_temp_fixed[2], theta_4=matrix_temp_fixed[4], theta_as_in=parm.theta_e, h_cv=h_cv)
+        q_flow_exhaust = _get_q_flow_exhaust(v_a=v_a, l_d=l_d, l_w=l_w, l_h=l_h, theta_1=matrix_temp_fixed[1], theta_2=matrix_temp_fixed[2], theta_4=matrix_temp_fixed[4], theta_as_in=theta_e, h_cv=h_cv)
 
         # the heat flow to the inside, W/m2
         q_flow_in = _get_q_flow_in(theta_3=matrix_temp_fixed[3], theta_r=theta_r, h_in=h_in)

@@ -96,25 +96,26 @@ def get_wall_status_data_by_detailed_calculation(calc_mode_h_cv: str, calc_mode_
 
     with np.errstate(all='log'):  # withスコープ内でエラーが出た場合、Logを出力する
         for row in df.itertuples():
+            
             print(row[0])
-            # パラメータを設定
-            parms = (vw.Parameters(theta_e=row.theta_e,
-                                   theta_r=row.theta_r,
-                                   J_surf=row.j_surf,
-                                   a_surf=row.a_surf,
-                                   C_1=row.C_1,
-                                   C_2=row.C_2,
-                                   l_h=row.l_h,
-                                   l_w=row.l_w,
-                                   l_d=row.l_d,
-                                   angle=row.angle,
-                                   v_a=row.v_a,
-                                   l_s=row.l_s,
-                                   emissivity_1=row.emissivity_1,
-                                   emissivity_2=row.emissivity_2))
 
             # 通気層の状態値を取得
-            status = vw.get_wall_status_values(parms, calc_mode_h_cv, calc_mode_h_rv, h_out, h_in)
+            status = vw.get_wall_status_values(
+                theta_e=row.theta_e,
+                theta_r=row.theta_r,
+                j_surf=row.j_surf,
+                a_surf=row.a_surf,
+                c_1=row.C_1,
+                c_2=row.C_2,
+                l_h=row.l_h,
+                l_w=row.l_w,
+                l_d=row.l_d,
+                angle=row.angle,
+                v_a=row.v_a,
+                eps_1=row.emissivity_1,
+                eps_2=row.emissivity_2,
+                calc_mode_h_cv=calc_mode_h_cv, calc_mode_h_rv=calc_mode_h_rv, h_out=h_out, h_in=h_in
+            )
             theta_out_surf.append(status.matrix_temp[0])
             theta_1_surf.append(status.matrix_temp[1])
             theta_2_surf.append(status.matrix_temp[2])
