@@ -1,5 +1,5 @@
 import numpy as np
-import ventilation_wall
+import ventilation_layer.ventilation_wall as ventilation_wall
 import ventilation_layer.global_number as global_number
 
 

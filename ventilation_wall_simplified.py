@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 
 import ventilation_layer.heat_transfer_coefficient as htc
-import ventilation_wall as vw
+import ventilation_layer.ventilation_wall as vw
 import envelope_performance_factors as epf
 from ventilation_layer.global_number import get_c_air, get_rho_air
 

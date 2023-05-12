@@ -4,7 +4,7 @@ import numpy as np
 from typing import List, Tuple
 
 import ventilation_layer.global_number as global_number
-import ventilation_wall as vw
+import ventilation_layer.ventilation_wall as vw
 import ventilation_wall_simplified as vws
 import envelope_performance_factors as epf
 import ventilation_layer.heat_transfer_coefficient as htc

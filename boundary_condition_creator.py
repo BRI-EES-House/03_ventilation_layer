@@ -2,7 +2,7 @@ import itertools
 import pandas as pd
 import numpy as np
 import ventilation_layer.global_number as global_number
-import ventilation_wall as vw
+import ventilation_layer.ventilation_wall as vw
 from ventilation_layer import heat_transfer_coefficient as htc
 
 
