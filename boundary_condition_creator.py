@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import ventilation_layer.global_number as global_number
 import ventilation_wall as vw
+from ventilation_layer import heat_transfer_coefficient as htc
 
 
 def get_average_climate(csv_file_path: str, target_month: int, target_solar_radiation_name: str) -> tuple:
@@ -123,7 +124,8 @@ def calc_ventilation_wall_surface_temperatures(angle: float, theta_e: float, j_s
     emissivity_2=np.array([0.1, np.median([0.1, 0.9]), 0.9], dtype=float).mean()
 
     # 通気層の状態値を取得
-    status = vw.get_wall_status_values(
+    theta_out_surf, theta_1_surf, theta_2_surf, theta_in_surf, theta_as, _ = vw.get_wall_status_values(
+        index=0,
         theta_e=theta_e,
         theta_r=theta_r,
         j_surf=j_surf,
@@ -140,28 +142,19 @@ def calc_ventilation_wall_surface_temperatures(angle: float, theta_e: float, j_s
         calc_mode_h_cv=calc_mode_h_cv, calc_mode_h_rv=calc_mode_h_rv, h_out=h_out, h_in=h_in
     )
 
-    # the temperature at the eace points
-    matrix_temp = status.matrix_temp
-
-    # the surface temperature 1, degrees
-    theta_1_surf = matrix_temp[1]
-
-    # the surface temperature 2, degrees
-    theta_2_surf = matrix_temp[2]
-
-    # the air temperature in the ventilation layer, degrees
-    theta_as_ave = matrix_temp[4]
+    # the convective thermal transmittance coefficient, W/m2K
+    h_cv = htc.get_h_cv(calc_mode=calc_mode_h_cv, v_a=v_a, theta_1=theta_1_surf, theta_2=theta_2_surf, angle=angle, l_h=l_h, l_d=l_d)
 
     # the heat flow from the outside(include solar irradiance) to the exterior surface, W/m2
-    q_outer_flow = status.q_flow_out
+    q_outer_flow = vw.get_q_flow_out(theta_e=theta_e, a_surf=a_surf, j_surf=j_surf, theta_0=theta_out_surf, h_out=h_out)
 
     # the exhausted heat flow from the ventilation layer, W/m2
-    q_exhaust_flow = status.q_flow_exhaust
+    q_exhaust_flow = vw.get_q_flow_exhaust(v_a=v_a, l_d=l_d, l_w=l_w, l_h=l_h, theta_1=theta_1_surf, theta_2=theta_2_surf, theta_4=theta_as, theta_as_in=theta_e, h_cv=h_cv)
 
     # the heat flow to the inside, W/m2
-    q_inner_flow = status.q_flow_in
+    q_inner_flow = vw.get_q_flow_in(theta_3=theta_in_surf, theta_r=theta_r, h_in=h_in)
 
-    return theta_1_surf, theta_2_surf, theta_as_ave, q_outer_flow, q_exhaust_flow, q_inner_flow
+    return theta_1_surf, theta_2_surf, theta_as, q_outer_flow, q_exhaust_flow, q_inner_flow
 
 
 def add_ventilation_wall_temperatures_and_heat_flow(target_df: pd.DataFrame) -> pd.DataFrame:

@@ -29,11 +29,14 @@ def get_parameter_list() -> List[Tuple[float]]:
 
     # 外気温度は、冬期条件（-10.0～10.0degC）、夏期条件（25.0～35.0degC）をそれぞれ与える
     theta_e = np.array([-10.0, 0.0, 10.0, 25.0, 30.0, 35.0], dtype=float)           # 外気温度, degree C
+    # theta_e = np.array([0.0, 30.0])
     # 室内温度は、冬期条件（20.0degC）と夏期条件（27.0degC）を与える
     theta_r = np.array([20.0, 27.0], dtype=float)                                   # 室内温度,　degree C
     # 上記以外のパラメータには、一部を除いて想定される上下限値と中央値の3点を与える
     j_surf = np.array([0.0, np.median([0.0, 1000.0]), 1000.0], dtype=float)         # 外気側表面に入射する日射量, W/m2
+    # j_surf = [500.0]
     a_surf = np.array([0.0, np.median([0.0, 1.0]), 1.0], dtype=float)               # 外気側表面日射吸収率
+    # a_surf = [0.5]
     C_1 = np.array([0.5, np.median([0.5, 100.0]), 100.0], dtype=float)              # 外気側部材の熱コンダクタンス,W/(m2・K)
     C_2 = np.array([0.1, np.median([0.1, 5.0]), 5.0], dtype=float)                  # 室内側部材の熱コンダクタンス, W/(m2・K)
     l_h = np.array([3.0, np.median([3.0, 12.0]), 12.0], dtype=float)                # 通気層の長さ, m
@@ -69,38 +72,12 @@ def get_wall_status_data_by_detailed_calculation(calc_mode_h_cv: str, calc_mode_
     h_out = global_number.get_h_out()
     h_in = global_number.get_h_in()
 
-    # 計算結果格納用配列を用意
-    theta_sat = []          # 相当外気温度[℃]
-    theta_out_surf = []     # 外気側表面温度[℃]
-    theta_1_surf = []       # 通気層に面する面1の表面温度[℃]
-    theta_2_surf = []       # 通気層に面する面1の表面温度[℃]
-    theta_in_surf = []      # 室内側表面温度[℃]
-    theta_as_ave = []       # 通気層の平均温度[℃]
-    effective_emissivity = []    # 有効放射率[-]
-    h_cv = []               # 通気層の対流熱伝達率[W/(m2・K)]
-    h_rv = []               # 通気層の放射熱伝達率[W/(m2・K)]
-    theta_as_e = []         # 通気層の等価温度[℃]
-    q_room_side = []        # 室内表面熱流[W/m2]
-    k_e = []                # 通気層を有する壁体の相当熱貫流率を求めるための補正係数[-]
-    heat_balance_0 = []     # 外気側表面の熱収支収支[W/m2]
-    heat_balance_1 = []     # 通気層に面する面1の熱収支[W/m2]
-    heat_balance_2 = []     # 通気層に面する面2の熱収支[W/m2]
-    heat_balance_3 = []     # 室内側表面の熱収支[W/m2]
-    heat_balance_4 = []     # 通気層内空気の熱収支[W/m2]
-    is_optimize_succeed = []    # 最適化が正常に終了したかどうか
-    optimize_message = []   # 最適化の終了メッセージ
-
-    # エラーログ出力用の設定
-    log = Log()
-    saved_handler = np.seterrcall(log)
-
     with np.errstate(all='log'):  # withスコープ内でエラーが出た場合、Logを出力する
-        for row in df.itertuples():
             
-            print(row[0])
-
-            # 通気層の状態値を取得
-            status = vw.get_wall_status_values(
+        # 通気層の状態値を取得
+        results = [
+            vw.get_wall_status_values(
+                index=row[0],
                 theta_e=row.theta_e,
                 theta_r=row.theta_r,
                 j_surf=row.j_surf,
@@ -114,52 +91,90 @@ def get_wall_status_data_by_detailed_calculation(calc_mode_h_cv: str, calc_mode_
                 v_a=row.v_a,
                 eps_1=row.emissivity_1,
                 eps_2=row.emissivity_2,
-                calc_mode_h_cv=calc_mode_h_cv, calc_mode_h_rv=calc_mode_h_rv, h_out=h_out, h_in=h_in
-            )
-            theta_out_surf.append(status.matrix_temp[0])
-            theta_1_surf.append(status.matrix_temp[1])
-            theta_2_surf.append(status.matrix_temp[2])
-            theta_in_surf.append(status.matrix_temp[3])
-            theta_as_ave.append(status.matrix_temp[4])
-            effective_emissivity.append(htc.get_e(eps1=row.emissivity_1, eps2=row.emissivity_2))
-            h_cv.append(status.h_cv)
-            h_rv.append(status.h_rv)
+                calc_mode_h_cv=calc_mode_h_cv,
+                calc_mode_h_rv=calc_mode_h_rv,
+                h_out=h_out,
+                h_in=h_in
+            ) for row in df.itertuples()
+        ]
 
-            # 通気層の等価温度を取得
-            theta_as_e_buf = epf.get_theata_as_e(status.matrix_temp[4], status.matrix_temp[1],
-                                                  status.h_cv, status.h_rv)
-            theta_as_e.append(theta_as_e_buf)
+    # the temperature of the surface of exterior, degrees
+    theta_out_surf = np.array([result[0] for result in results])
 
-            # 相当外気温度を計算
-            theta_sat_buf = epf.get_theta_SAT(row.theta_e, row.a_surf, row.j_surf, h_out)
-            theta_sat.append(theta_sat_buf)
+    # the temperature of the surface of exterior side facing the ventilation layer, degrees
+    theta_1 = np.array([result[1] for result in results])
 
-            # 通気層を有する壁体の相当熱貫流率を求めるための補正係数を取得
-            k_e.append(epf.get_k_e(theta_as_e_buf, row.theta_r, theta_sat_buf))
+    # the temperature of the surface of interior side facing the ventilation layer, degrees
+    theta_2 = np.array([result[2] for result in results])
 
-            # 室内側表面熱流を計算
-            r_i_buf = epf.get_r_i(C_2=row.C_2)
-            q_room_side.append(epf.get_heat_flow_room_side_by_vent_layer_heat_resistance(r_i=r_i_buf, theta_2=status.matrix_temp[2], theta_r=row.theta_r))
+    # the temperature on the surface of the inside, degrees
+    theta_in_surf = np.array([result[3] for result in results])    
 
-            # 各層の熱収支収支を取得
-            heat_balance_0.append(status.matrix_heat_balance[0])
-            heat_balance_1.append(status.matrix_heat_balance[1])
-            heat_balance_2.append(status.matrix_heat_balance[2])
-            heat_balance_3.append(status.matrix_heat_balance[3])
-            heat_balance_4.append(status.matrix_heat_balance[4])
+    # the air tempearature in the ventilation layer, degrees
+    theta_as_ave = np.array([result[4] for result in results])
 
-            # 最適化に関する情報を取得
-            is_optimize_succeed.append(status.is_optimize_succeed)
-            optimize_message.append(status.optimize_message)
+    # the heat balance of the surface of the exterilr, W/m2
+    heat_balance_0 = [result[5][0] for result in results]
+
+    # the heat balance of the surface of the exterior side of the ventilation layer, W/m2
+    heat_balance_1 = [result[5][1] for result in results]
+
+    # the heat balance of the surface of the interior side of the ventilation layer, W/m2
+    heat_balance_2 = [result[5][2] for result in results]
+
+    # the heat balance of the surface of the inside, W/m2
+    heat_balance_3 = [result[5][3] for result in results]
+
+    # the heat balance of the air in the ventilation layer, W/m2
+    heat_balance_4 = [result[5][4] for result in results]
+
+    is_optimize_succeed = [result[6].is_optimize_succeed for result in results]
+    optimize_message = [result[6].optimize_message for result in results]
+
+    c_2 = df.C_2.to_numpy()
+    v_a = df.v_a.to_numpy()
+    angle =df.angle.to_numpy()
+    l_h = df.l_h.to_numpy()
+    l_d = df.l_d.to_numpy()
+    theta_r = df.theta_r.to_numpy()
+    theta_e = df.theta_e.to_numpy()
+    a_surf = df.a_surf.to_numpy()
+    j_surf = df.j_surf.to_numpy()
+    eps1 = df.emissivity_1.to_numpy()
+    eps2 = df.emissivity_2.to_numpy()
+
+    # the thermal resistance of the interior material, m2K/W
+    r_i = epf.get_r_i(C_2=c_2)
+
+    # the effective emissivity, -
+    eps_eff = np.vectorize(htc.get_e)(eps1=eps1, eps2=eps2)
+
+    # the convective heat transfer coefficient, W/m2K
+    h_cv = np.vectorize(htc.get_h_cv)(calc_mode=calc_mode_h_cv, v_a=v_a, theta_1=theta_1, theta_2=theta_2, angle=angle, l_h=l_h, l_d=l_d)
+
+    # the radiative heat transfer coefficient, W/m2K
+    h_rv = np.vectorize(htc.get_h_rv)(eps_eff=eps_eff, calc_mode=calc_mode_h_rv, theta_1=theta_1, theta_2=theta_2)
+
+    # the equivallent temperature of the ventilation layer, degrees
+    theta_as_e = np.vectorize(epf.get_theata_as_e)(theta_as_ave=theta_as_ave, theta_1_surf=theta_1, h_cv=h_cv, h_rv=h_rv)
+
+    # SAT temperature, degrees
+    theta_sat = epf.get_theta_SAT(theta_e=theta_e, a_surf=a_surf, j_surf=j_surf, h_out=h_out)
+
+    # the heat flow of the inside surface, W/m2
+    q_room_side = epf.get_heat_flow_room_side_by_vent_layer_heat_resistance(r_i=r_i, theta_2=theta_2, theta_r=theta_r)
+
+    # the correction factor for calculating the equivalent thermal transmission coefficient of the wall with the ventilation layer
+    k_e = np.vectorize(epf.get_k_e)(theta_as_e=theta_as_e, theta_r=theta_r, theta_SAT=theta_sat)
 
     # 計算結果をDataFrameに追加
     df['theta_sat'] = theta_sat
     df['theta_out_surf'] = theta_out_surf
-    df['theta_1_surf'] = theta_1_surf
-    df['theta_2_surf'] = theta_2_surf
+    df['theta_1_surf'] = theta_1
+    df['theta_2_surf'] = theta_2
     df['theta_in_surf'] = theta_in_surf
     df['theta_as_ave'] = theta_as_ave
-    df['effective_emissivity'] = effective_emissivity
+    df['effective_emissivity'] = eps_eff
     df['h_cv'] = h_cv
     df['h_rv'] = h_rv
     df['theta_as_e'] = theta_as_e

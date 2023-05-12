@@ -10,30 +10,6 @@ from ventilation_layer import global_number as gn
 @dataclass
 class WallStatusValues:
 
-    # 通気層内の各点の温度, degree C
-    matrix_temp: np.zeros(shape=(5, 1))
-
-    # 各層の熱収支
-    matrix_heat_balance: np.zeros(shape=(5, 1))
-
-    # 対流熱伝達率, W/(m2・K)
-    h_cv: float
-
-    # 放射熱伝達率, W/(m2・K)
-    h_rv: float
-
-    # the heat flow from the outside(inclued solar irradiance) to the exterior surface, W/m2
-    q_flow_out: float
-
-    # the heat flow from the exterior surface to the surface of exterior side facing the ventilation layer, W/m2
-    q_flow_em: float
-
-    # the exhausted heat flow from the ventilation layer, W/m2
-    q_flow_exhaust: float
-
-    # the heat flow to the inside, W/m2
-    q_flow_in: float
-
     # 最適化が正常に終了したかどうか
     is_optimize_succeed: bool
 
@@ -147,6 +123,7 @@ def _get_heat_balance(
 
 
 def get_wall_status_values(
+        index: int,
         theta_e: float,
         theta_r: float,
         j_surf: float,
@@ -190,6 +167,8 @@ def get_wall_status_values(
         通気層の状態値（通気層の各層の温度、各層の熱収支、対流熱伝達率、放射熱伝達率、最適化の終了ステータス、終了メッセージ）
     """
 
+    print(index)
+
     # the initial temperature of the points in the ventilation layer
     t0 = theta_e
     t1 = theta_e + (theta_r - theta_e) * 1 / 4
@@ -215,39 +194,25 @@ def get_wall_status_values(
         # the temperatures, degrees
         matrix_temp_fixed = optimize_result.x
 
+        # the temperature of the exterior surface, degrees
+        theta_out_surf = matrix_temp_fixed[0]
+
+        # the temperature of the surface of the exterior side facing the ventilation layer, degrees
+        theta_1_surf = matrix_temp_fixed[1]
+
+        # the temperature of the surface of the interior side facing the ventilation layer, degrees
+        theta_2_surf = matrix_temp_fixed[2]
+
+        # the temperature of the interior surface, degrees
+        theta_in_surf = matrix_temp_fixed[3]
+
+        # the air temperature in the ventilation layer
+        theta_as = matrix_temp_fixed[4]
+
         # the heat balance, W/m2
         heat_balance = f(matrix_temp=matrix_temp_fixed)
 
-        # the convective heat transfer coefficient, W/m2K
-        h_cv = htc.get_h_cv(calc_mode=calc_mode_h_cv, v_a=v_a, theta_1=matrix_temp_fixed[1], theta_2=matrix_temp_fixed[2], angle=angle, l_h=l_h, l_d=l_d)
-
-        # the effective emissivity
-        eps_eff = htc.get_e(eps1=eps_1, eps2=eps_2)
-
-        # the radiative heat transfer coefficient, W/m2K
-        h_rv = htc.get_h_rv(eps_eff=eps_eff, calc_mode=calc_mode_h_rv, theta_1=matrix_temp_fixed[1], theta_2=matrix_temp_fixed[2])
-
-        # the heat flow from the outside(inclued solar irradiance) to the exterior surface, W/m2
-        q_flow_out = _get_q_flow_out(theta_e=theta_e, a_surf=a_surf, j_surf=j_surf, theta_0=matrix_temp_fixed[0], h_out=h_out)
-
-        # the heat flow from the exterior surface to the surface of exterior side facing the ventilation layer, W/m2
-        q_flow_em = _get_q_flow_em(theta_0=matrix_temp_fixed[0], theta_1=matrix_temp_fixed[1], c_1=c_1)
-
-        # the exhausted heat flow from the ventilation layer, W/m2
-        q_flow_exhaust = _get_q_flow_exhaust(v_a=v_a, l_d=l_d, l_w=l_w, l_h=l_h, theta_1=matrix_temp_fixed[1], theta_2=matrix_temp_fixed[2], theta_4=matrix_temp_fixed[4], theta_as_in=theta_e, h_cv=h_cv)
-
-        # the heat flow to the inside, W/m2
-        q_flow_in = _get_q_flow_in(theta_3=matrix_temp_fixed[3], theta_r=theta_r, h_in=h_in)
-
-        return WallStatusValues(
-            matrix_temp=matrix_temp_fixed,
-            matrix_heat_balance=heat_balance,
-            h_cv=h_cv,
-            h_rv=h_rv,
-            q_flow_out=q_flow_out,
-            q_flow_em=q_flow_em,
-            q_flow_exhaust=q_flow_exhaust,
-            q_flow_in=q_flow_in,
+        return theta_out_surf, theta_1_surf, theta_2_surf, theta_in_surf, theta_as, heat_balance, WallStatusValues(
             is_optimize_succeed=optimize_result.success,
             optimize_status=optimize_result.status,
             optimize_message=optimize_result.message
@@ -256,22 +221,14 @@ def get_wall_status_values(
     # If the optimized result is false, the return values are set to be np.nan.
     else:
 
-        return WallStatusValues(
-            matrix_temp=np.full(5, np.nan),
-            matrix_heat_balance=np.full(5, np.nan),
-            h_cv=np.nan,
-            h_rv=np.nan,
-            q_flow_out=np.nan,
-            q_flow_em=np.nan,
-            q_flow_exhaust=np.nan,
-            q_flow_in=np.nan,
+        return np.nan, np.nan, np.nan, np.nan, np.nan, np.full(5, np.nan), WallStatusValues(
             is_optimize_succeed=optimize_result.success,
             optimize_status=optimize_result.status,
             optimize_message=optimize_result.message
         )
 
 
-def _get_q_flow_out(theta_e: float, a_surf: float, j_surf: float, theta_0: float, h_out: float) -> float:
+def get_q_flow_out(theta_e: float, a_surf: float, j_surf: float, theta_0: float, h_out: float) -> float:
     """Calculate the heat flow from the outside to the exterior surface
 
     Args:
@@ -290,7 +247,7 @@ def _get_q_flow_out(theta_e: float, a_surf: float, j_surf: float, theta_0: float
     return h_out * (theta_sat - theta_0)
 
 
-def _get_q_flow_em(theta_0: float, theta_1: float, c_1: float) -> float:
+def get_q_flow_em(theta_0: float, theta_1: float, c_1: float) -> float:
     """Calculate the heat flow from the exterior surface to the surface of exterior side facing the ventilation layer
 
     Args:
@@ -304,7 +261,7 @@ def _get_q_flow_em(theta_0: float, theta_1: float, c_1: float) -> float:
     return c_1 * (theta_0 - theta_1)
 
 
-def _get_q_flow_exhaust(v_a: float, l_d: float, l_w: float, l_h: float, theta_1: float, theta_2: float, theta_4: float, theta_as_in: float, h_cv: float) -> float:
+def get_q_flow_exhaust(v_a: float, l_d: float, l_w: float, l_h: float, theta_1: float, theta_2: float, theta_4: float, theta_as_in: float, h_cv: float) -> float:
     """Calculate the exhausted heat flow from the ventilation layer.
 
     Args:
@@ -339,7 +296,7 @@ def _get_q_flow_exhaust(v_a: float, l_d: float, l_w: float, l_h: float, theta_1:
         return 0.0
 
 
-def _get_q_flow_in(theta_3: float, theta_r: float, h_in: float) -> float:
+def get_q_flow_in(theta_3: float, theta_r: float, h_in: float) -> float:
     """Calculate the heat flow to the inside.
 
     Args:
