@@ -20,38 +20,79 @@ class Log:
         print("LOG: %s" % msg)
 
 
-def get_parameter_list() -> List[Tuple[float]]:
+def get_parameter_data_frame() -> pd.DataFrame:
     """
     複数のパラメータの総当たりの組み合わせ（直積）のリストを作成する
     :param なし
     :return: 総当たりのパラメータリスト
     """
 
-    # 外気温度は、冬期条件（-10.0～10.0degC）、夏期条件（25.0～35.0degC）をそれぞれ与える
-    theta_e = np.array([-10.0, 0.0, 10.0, 25.0, 30.0, 35.0], dtype=float)           # 外気温度, degree C
-    # theta_e = np.array([0.0, 30.0])
-    # 室内温度は、冬期条件（20.0degC）と夏期条件（27.0degC）を与える
-    theta_r = np.array([20.0, 27.0], dtype=float)                                   # 室内温度,　degree C
+
+    # the outdoor temperature, degrees
+    # 外気温度は、冬期条件（-10.0～10.0degC）、夏期条件（25.0～35.0degC）を]それぞれ与える
+    # [-10.0, 0.0, 10.0, 25.0, 30.0, 35.0]
+    theta_e = [-10.0, 0.0, 10.0, 25.0, 30.0, 35.0]
+
     # 上記以外のパラメータには、一部を除いて想定される上下限値と中央値の3点を与える
-    j_surf = np.array([0.0, np.median([0.0, 1000.0]), 1000.0], dtype=float)         # 外気側表面に入射する日射量, W/m2
-    # j_surf = [500.0]
-    a_surf = np.array([0.0, np.median([0.0, 1.0]), 1.0], dtype=float)               # 外気側表面日射吸収率
-    # a_surf = [0.5]
-    C_1 = np.array([0.5, np.median([0.5, 100.0]), 100.0], dtype=float)              # 外気側部材の熱コンダクタンス,W/(m2・K)
-    C_2 = np.array([0.1, np.median([0.1, 5.0]), 5.0], dtype=float)                  # 室内側部材の熱コンダクタンス, W/(m2・K)
-    l_h = np.array([3.0, np.median([3.0, 12.0]), 12.0], dtype=float)                # 通気層の長さ, m
-    l_w = np.array([0.05, np.median([0.05, 10.0]), 10.0], dtype=float)              # 通気層の幅, m
-    l_d = np.array([0.05, np.median([0.05, 0.3]), 0.3], dtype=float)                # 通気層の厚さ, m
-    angle = np.array([0.0, np.median([0.0, 90.0]), 90.0], dtype=float)              # 通気層の傾斜角, degree
-    v_a = np.array([0.0, np.median([0.0, 1.0]), 1.0], dtype=float)                  # 通気層の平均風速, m/s
-    l_s = [0.45]                                                                    # 通気胴縁または垂木の間隔, m
-    emissivity_1 = [0.9]                                                            # 通気層に面する面1の放射率, -
-    emissivity_2 = np.array([0.1, np.median([0.1, 0.9]), 0.9], dtype=float)         # 通気層に面する面2の放射率, -
 
-    parameter_list = list(itertools.product(theta_e, theta_r, j_surf, a_surf, C_1, C_2, l_h, l_w, l_d, angle,
-                                            v_a, l_s, emissivity_1, emissivity_2))
+    # the solar irradiance, W/m2
+    # [0.0, 500.0, 1000.0]
+    j_surf = [0.0, 500.0, 1000.0]
 
-    return parameter_list
+    # the solar absorption ratio, -
+    # [0.0, 0.5, 1.0]
+    a_surf = [0.0, 0.5, 1.0]
+
+    # the thermal conductance of the exterior material, W/m2K
+    # [0.5, 50.25, 100.0]
+    C_1 = [0.5, 50.25, 100.0]
+    
+    # the thermal conductance of the interior material, W/m2K
+    # [0.1, 2.55, 5.0]
+    C_2 = [0.1, 2.55, 5.0]
+    
+    # the length of the ventilation layer, m
+    # [3.0, 7.5, 12.0]
+    l_h = [3.0, 7.5, 12.0]
+    
+    # the width of the ventilation layer, m
+    # [0.05, 5.025, 10.0]
+    l_w = [0.05, 5.025, 10.0]
+
+    # the thickness of the ventilation layer, m
+    # [0.05, 0.175, 0.3]
+    l_d = [0.05, 0.175, 0.3]
+    
+    # the angle of the ventilation layer, degrees
+    # [0.0, 45.0, 90.0]
+    angle = [0.0, 45.0, 90.0]
+
+    # the air vlocity of the ventilation layer, m/s
+    # [0.0, 0.5, 1.0]
+    v_a = [0.0, 0.5, 1.0]
+    
+    # the interval between the furring or the rafter, m
+    # [0.45]
+    l_s = [0.45]
+    
+    # the emissivity of the surface 1 facing the ventilation layer, -
+    # [0.9]
+    emissivity_1 = [0.9]
+
+    # the emissivity of the surface 1 facing the ventilation layer, -
+    # [0.1, 0.5, 0.9]
+    emissivity_2 = [0.1, 0.5, 0.9]
+    
+    parameter_list = list(itertools.product(theta_e, j_surf, a_surf, C_1, C_2, l_h, l_w, l_d, angle, v_a, l_s, emissivity_1, emissivity_2))
+    
+    parameter_name = ['theta_e', 'j_surf', 'a_surf', 'C_1', 'C_2', 'l_h', 'l_w', 'l_d', 'angle', 'v_a', 'l_s', 'emissivity_1', 'emissivity_2']
+
+    df = pd.DataFrame(parameter_list, columns=parameter_name)
+
+    # Give the temperature of 20.0 degrees for winter and 27.0 degrees for summer as the indoor temperature.
+    df['theta_r'] = np.where(df.theta_e > 20.0, 27.0, 20.0)
+
+    return df
 
 
 def get_wall_status_data_by_detailed_calculation(calc_mode_h_cv: str, calc_mode_h_rv: str) -> pd.DataFrame:
@@ -64,9 +105,7 @@ def get_wall_status_data_by_detailed_calculation(calc_mode_h_cv: str, calc_mode_
     """
 
     # パラメータの総当たりリストを作成する
-    parameter_name = ['theta_e', 'theta_r', 'j_surf', 'a_surf', 'C_1', 'C_2', 'l_h', 'l_w', 'l_d', 'angle',
-                      'v_a', 'l_s', 'emissivity_1', 'emissivity_2']
-    df = pd.DataFrame(get_parameter_list(), columns=parameter_name)
+    df = get_parameter_data_frame()
 
     # 固定値の設定
     h_out = global_number.get_h_out()
@@ -98,95 +137,95 @@ def get_wall_status_data_by_detailed_calculation(calc_mode_h_cv: str, calc_mode_
             ) for row in df.itertuples()
         ]
 
-    # the temperature of the surface of exterior, degrees
-    theta_out_surf = np.array([result[0] for result in results])
+        # the temperature of the surface of exterior, degrees
+        theta_out_surf = np.array([result[0] for result in results])
 
-    # the temperature of the surface of exterior side facing the ventilation layer, degrees
-    theta_1 = np.array([result[1] for result in results])
+        # the temperature of the surface of exterior side facing the ventilation layer, degrees
+        theta_1 = np.array([result[1] for result in results])
 
-    # the temperature of the surface of interior side facing the ventilation layer, degrees
-    theta_2 = np.array([result[2] for result in results])
+        # the temperature of the surface of interior side facing the ventilation layer, degrees
+        theta_2 = np.array([result[2] for result in results])
 
-    # the temperature on the surface of the inside, degrees
-    theta_in_surf = np.array([result[3] for result in results])    
+        # the temperature on the surface of the inside, degrees
+        theta_in_surf = np.array([result[3] for result in results])    
 
-    # the air tempearature in the ventilation layer, degrees
-    theta_as_ave = np.array([result[4] for result in results])
+        # the air tempearature in the ventilation layer, degrees
+        theta_as_ave = np.array([result[4] for result in results])
 
-    # the heat balance of the surface of the exterilr, W/m2
-    heat_balance_0 = [result[5][0] for result in results]
+        # the heat balance of the surface of the exterilr, W/m2
+        heat_balance_0 = [result[5][0] for result in results]
 
-    # the heat balance of the surface of the exterior side of the ventilation layer, W/m2
-    heat_balance_1 = [result[5][1] for result in results]
+        # the heat balance of the surface of the exterior side of the ventilation layer, W/m2
+        heat_balance_1 = [result[5][1] for result in results]
 
-    # the heat balance of the surface of the interior side of the ventilation layer, W/m2
-    heat_balance_2 = [result[5][2] for result in results]
+        # the heat balance of the surface of the interior side of the ventilation layer, W/m2
+        heat_balance_2 = [result[5][2] for result in results]
 
-    # the heat balance of the surface of the inside, W/m2
-    heat_balance_3 = [result[5][3] for result in results]
+        # the heat balance of the surface of the inside, W/m2
+        heat_balance_3 = [result[5][3] for result in results]
 
-    # the heat balance of the air in the ventilation layer, W/m2
-    heat_balance_4 = [result[5][4] for result in results]
+        # the heat balance of the air in the ventilation layer, W/m2
+        heat_balance_4 = [result[5][4] for result in results]
 
-    is_optimize_succeed = [result[6].is_optimize_succeed for result in results]
-    optimize_message = [result[6].optimize_message for result in results]
+        is_optimize_succeed = [result[6].is_optimize_succeed for result in results]
+        optimize_message = [result[6].optimize_message for result in results]
 
-    c_2 = df.C_2.to_numpy()
-    v_a = df.v_a.to_numpy()
-    angle =df.angle.to_numpy()
-    l_h = df.l_h.to_numpy()
-    l_d = df.l_d.to_numpy()
-    theta_r = df.theta_r.to_numpy()
-    theta_e = df.theta_e.to_numpy()
-    a_surf = df.a_surf.to_numpy()
-    j_surf = df.j_surf.to_numpy()
-    eps1 = df.emissivity_1.to_numpy()
-    eps2 = df.emissivity_2.to_numpy()
+        c_2 = df.C_2.to_numpy()
+        v_a = df.v_a.to_numpy()
+        angle =df.angle.to_numpy()
+        l_h = df.l_h.to_numpy()
+        l_d = df.l_d.to_numpy()
+        theta_r = df.theta_r.to_numpy()
+        theta_e = df.theta_e.to_numpy()
+        a_surf = df.a_surf.to_numpy()
+        j_surf = df.j_surf.to_numpy()
+        eps1 = df.emissivity_1.to_numpy()
+        eps2 = df.emissivity_2.to_numpy()
 
-    # the thermal resistance of the interior material, m2K/W
-    r_i = epf.get_r_i(C_2=c_2)
+        # the effective emissivity, -
+        eps_eff = np.vectorize(htc.get_e)(eps1=eps1, eps2=eps2)
 
-    # the effective emissivity, -
-    eps_eff = np.vectorize(htc.get_e)(eps1=eps1, eps2=eps2)
+        # the convective heat transfer coefficient, W/m2K
+        h_cv = np.vectorize(htc.get_h_cv)(calc_mode=calc_mode_h_cv, v_a=v_a, theta_1=theta_1, theta_2=theta_2, angle=angle, l_h=l_h, l_d=l_d)
 
-    # the convective heat transfer coefficient, W/m2K
-    h_cv = np.vectorize(htc.get_h_cv)(calc_mode=calc_mode_h_cv, v_a=v_a, theta_1=theta_1, theta_2=theta_2, angle=angle, l_h=l_h, l_d=l_d)
+        # the radiative heat transfer coefficient, W/m2K
+        h_rv = np.vectorize(htc.get_h_rv)(eps_eff=eps_eff, calc_mode=calc_mode_h_rv, theta_1=theta_1, theta_2=theta_2)
 
-    # the radiative heat transfer coefficient, W/m2K
-    h_rv = np.vectorize(htc.get_h_rv)(eps_eff=eps_eff, calc_mode=calc_mode_h_rv, theta_1=theta_1, theta_2=theta_2)
+        # the equivallent temperature of the ventilation layer, degrees
+        theta_as_e = np.vectorize(epf.get_theata_as_e)(theta_as_ave=theta_as_ave, theta_1_surf=theta_1, h_cv=h_cv, h_rv=h_rv)
 
-    # the equivallent temperature of the ventilation layer, degrees
-    theta_as_e = np.vectorize(epf.get_theata_as_e)(theta_as_ave=theta_as_ave, theta_1_surf=theta_1, h_cv=h_cv, h_rv=h_rv)
+        # SAT temperature, degrees
+        theta_sat = epf.get_theta_SAT(theta_e=theta_e, a_surf=a_surf, j_surf=j_surf, h_out=h_out)
 
-    # SAT temperature, degrees
-    theta_sat = epf.get_theta_SAT(theta_e=theta_e, a_surf=a_surf, j_surf=j_surf, h_out=h_out)
+        # the thermal resistance of the interior material, m2K/W
+        r_i = epf.get_r_i(C_2=c_2)
 
-    # the heat flow of the inside surface, W/m2
-    q_room_side = epf.get_heat_flow_room_side_by_vent_layer_heat_resistance(r_i=r_i, theta_2=theta_2, theta_r=theta_r)
+        # the heat flow of the inside surface, W/m2
+        q_room_side = epf.get_heat_flow_room_side_by_vent_layer_heat_resistance(r_i=r_i, theta_2=theta_2, theta_r=theta_r)
 
-    # the correction factor for calculating the equivalent thermal transmission coefficient of the wall with the ventilation layer
-    k_e = np.vectorize(epf.get_k_e)(theta_as_e=theta_as_e, theta_r=theta_r, theta_SAT=theta_sat)
+        # the correction factor for calculating the equivalent thermal transmission coefficient of the wall with the ventilation layer
+        k_e = np.vectorize(epf.get_k_e)(theta_as_e=theta_as_e, theta_r=theta_r, theta_SAT=theta_sat)
 
-    # 計算結果をDataFrameに追加
-    df['theta_sat'] = theta_sat
-    df['theta_out_surf'] = theta_out_surf
-    df['theta_1_surf'] = theta_1
-    df['theta_2_surf'] = theta_2
-    df['theta_in_surf'] = theta_in_surf
-    df['theta_as_ave'] = theta_as_ave
-    df['effective_emissivity'] = eps_eff
-    df['h_cv'] = h_cv
-    df['h_rv'] = h_rv
-    df['theta_as_e'] = theta_as_e
-    df['k_e'] = k_e
-    df['q_room_side'] = q_room_side
-    df['heat_balance_0'] = heat_balance_0
-    df['heat_balance_1'] = heat_balance_1
-    df['heat_balance_2'] = heat_balance_2
-    df['heat_balance_3'] = heat_balance_3
-    df['heat_balance_4'] = heat_balance_4
-    df['is_optimize_succeed'] = is_optimize_succeed
-    df['optimize_message'] = optimize_message
+        # 計算結果をDataFrameに追加
+        df['theta_sat'] = theta_sat
+        df['theta_out_surf'] = theta_out_surf
+        df['theta_1_surf'] = theta_1
+        df['theta_2_surf'] = theta_2
+        df['theta_in_surf'] = theta_in_surf
+        df['theta_as_ave'] = theta_as_ave
+        df['effective_emissivity'] = eps_eff
+        df['h_cv'] = h_cv
+        df['h_rv'] = h_rv
+        df['theta_as_e'] = theta_as_e
+        df['k_e'] = k_e
+        df['q_room_side'] = q_room_side
+        df['heat_balance_0'] = heat_balance_0
+        df['heat_balance_1'] = heat_balance_1
+        df['heat_balance_2'] = heat_balance_2
+        df['heat_balance_3'] = heat_balance_3
+        df['heat_balance_4'] = heat_balance_4
+        df['is_optimize_succeed'] = is_optimize_succeed
+        df['optimize_message'] = optimize_message
 
     return df
 
@@ -200,9 +239,7 @@ def get_wall_status_data_by_simplified_calculation_no_01() -> pd.DataFrame:
     """
 
     # パラメータの総当たりリストを作成する
-    parameter_name = ['theta_e', 'theta_r', 'j_surf', 'a_surf', 'C_1', 'C_2', 'l_h', 'l_w', 'l_d', 'angle',
-                      'v_a', 'l_s', 'emissivity_1', 'emissivity_2']
-    df = pd.DataFrame(get_parameter_list(), columns=parameter_name)
+    df = get_parameter_data_frame()
 
     # 固定値の設定
     h_out = global_number.get_h_out()
@@ -278,10 +315,8 @@ def get_wall_status_data_by_simplified_calculation_no_02() -> pd.DataFrame:
     """
 
     # パラメータの総当たりリストを作成する
-    parameter_name = ['theta_e', 'theta_r', 'j_surf', 'a_surf', 'C_1', 'C_2', 'l_h', 'l_w', 'l_d', 'angle',
-                      'v_a', 'l_s', 'emissivity_1', 'emissivity_2']
-    df = pd.DataFrame(get_parameter_list(), columns=parameter_name)
-
+    df = get_parameter_data_frame()
+                      
     # 固定値の設定
     h_out = global_number.get_h_out()
     h_in = global_number.get_h_in()
@@ -371,8 +406,8 @@ def get_wall_status_data_by_simplified_calculation_no_03() -> pd.DataFrame:
     # パラメータの総当たりリストを作成する
     parameter_name = ['theta_e', 'theta_r', 'j_surf', 'a_surf', 'C_1', 'C_2', 'l_h', 'l_w', 'l_d', 'angle',
                       'v_a', 'l_s', 'emissivity_1', 'emissivity_2']
-    df = pd.DataFrame(get_parameter_list(), columns=parameter_name)
-
+    df = get_parameter_data_frame()
+                      
     # 固定値の設定
     h_out = global_number.get_h_out()
 
@@ -441,10 +476,8 @@ def get_wall_status_data_by_simplified_calculation_no_04() -> pd.DataFrame:
     """
 
     # パラメータの総当たりリストを作成する
-    parameter_name = ['theta_e', 'theta_r', 'j_surf', 'a_surf', 'C_1', 'C_2', 'l_h', 'l_w', 'l_d', 'angle',
-                      'v_a', 'l_s', 'emissivity_1', 'emissivity_2']
-    df = pd.DataFrame(get_parameter_list(), columns=parameter_name)
-
+    df = get_parameter_data_frame()
+    
     # 固定値の設定
     h_out = global_number.get_h_out()
 

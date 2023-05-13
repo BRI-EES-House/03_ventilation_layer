@@ -167,7 +167,8 @@ def get_wall_status_values(
         通気層の状態値（通気層の各層の温度、各層の熱収支、対流熱伝達率、放射熱伝達率、最適化の終了ステータス、終了メッセージ）
     """
 
-    print(index)
+    if index % 10000 == 0:
+        print(index)
 
     # the initial temperature of the points in the ventilation layer
     t0 = theta_e
@@ -221,7 +222,7 @@ def get_wall_status_values(
     # If the optimized result is false, the return values are set to be np.nan.
     else:
 
-        return np.nan, np.nan, np.nan, np.nan, np.nan, np.full(5, np.nan), WallStatusValues(
+        return 0.0, 0.0, 0.0, 0.0, 0.0, np.zeros(5), WallStatusValues(
             is_optimize_succeed=optimize_result.success,
             optimize_status=optimize_result.status,
             optimize_message=optimize_result.message

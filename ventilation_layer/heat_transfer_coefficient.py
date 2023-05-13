@@ -258,12 +258,10 @@ def _get_n_u(theta_1: float, theta_2: float, angle: float, l_h: float, l_d: floa
     if angle == 0.0:
         if r_a > 5830.0:
             nusselt_number = 1.44 * (1.0 - 1708.0/r_a) + (r_a/5830.0) ** (1/3)
-        elif 1708.0 < r_a <= 5830.0:
+        elif r_a > 1708.0:
             nusselt_number = 1.0 + 1.44 * (1.0 - 1708.0/r_a)
-        elif r_a <= 1708.0:
-            nusselt_number = 1.0
         else:
-            raise Exception()
+            nusselt_number = 1.0
 
     # 傾斜角が90°（鉛直）のとき
     elif angle == 90.0:
