@@ -20,7 +20,7 @@ class Log:
         print("LOG: %s" % msg)
 
 
-def get_parameter_data_frame() -> pd.DataFrame:
+def _get_parameter_data_frame() -> pd.DataFrame:
     """
     複数のパラメータの総当たりの組み合わせ（直積）のリストを作成する
     :param なし
@@ -105,7 +105,7 @@ def get_wall_status_data_by_detailed_calculation(calc_mode_h_cv: str, calc_mode_
     """
 
     # パラメータの総当たりリストを作成する
-    df = get_parameter_data_frame()
+    df = _get_parameter_data_frame()
 
     # 固定値の設定
     h_out = global_number.get_h_out()
@@ -239,7 +239,7 @@ def get_wall_status_data_by_simplified_calculation_no_01() -> pd.DataFrame:
     """
 
     # パラメータの総当たりリストを作成する
-    df = get_parameter_data_frame()
+    df = _get_parameter_data_frame()
 
     # 固定値の設定
     h_out = global_number.get_h_out()
@@ -315,7 +315,7 @@ def get_wall_status_data_by_simplified_calculation_no_02() -> pd.DataFrame:
     """
 
     # パラメータの総当たりリストを作成する
-    df = get_parameter_data_frame()
+    df = _get_parameter_data_frame()
                       
     # 固定値の設定
     h_out = global_number.get_h_out()
@@ -406,7 +406,7 @@ def get_wall_status_data_by_simplified_calculation_no_03() -> pd.DataFrame:
     # パラメータの総当たりリストを作成する
     parameter_name = ['theta_e', 'theta_r', 'j_surf', 'a_surf', 'C_1', 'C_2', 'l_h', 'l_w', 'l_d', 'angle',
                       'v_a', 'l_s', 'emissivity_1', 'emissivity_2']
-    df = get_parameter_data_frame()
+    df = _get_parameter_data_frame()
                       
     # 固定値の設定
     h_out = global_number.get_h_out()
@@ -476,7 +476,7 @@ def get_wall_status_data_by_simplified_calculation_no_04() -> pd.DataFrame:
     """
 
     # パラメータの総当たりリストを作成する
-    df = get_parameter_data_frame()
+    df = _get_parameter_data_frame()
     
     # 固定値の設定
     h_out = global_number.get_h_out()
