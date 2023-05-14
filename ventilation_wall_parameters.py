@@ -60,8 +60,9 @@ def _get_parameter_data_frame() -> pd.DataFrame:
     l_w = [0.05, 5.025, 10.0]
 
     # the thickness of the ventilation layer, m
-    # [0.05, 0.175, 0.3]
-    l_d = [0.05, 0.175, 0.3]
+    # old [0.05, 0.175, 0.3]
+    # changed to [0.005, 0.0175, 0.03] (2023/5/14)
+    l_d = [0.005, 0.0175, 0.03]
     
     # the angle of the ventilation layer, degrees
     # [0.0, 45.0, 90.0]
