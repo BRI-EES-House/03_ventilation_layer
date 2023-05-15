@@ -198,26 +198,27 @@ def get_vent_wall_performance_factor_by_simplified_calculation_no_03(parm: Param
         beta = (2 * h_cv * parm.l_w) / (get_c_air() * get_rho_air(parm.theta_e) * v_vent)
         epc_s = 1.0 / parm.l_h * 1.0 / beta * (math.exp(-beta * parm.l_h) - 1.0)
         epc_s_dash = - ((2.0 * h_cv) * epc_s) / (1.0 + epc_s)
-        h_v_dash = h_v + 1.0 / ((1.0 / epc_s_dash) + h_rv / (h_v * h_cv))
+        r_e = 1.0 / epc_s_dash + h_rv / (h_v * h_cv)
+        h_e = 1 / r_e
     else:
-        h_v_dash = h_v
-
+        h_e = 0.0
+    
     # 熱抵抗を設定
     u_o_s = 1.0 / epf.get_r_o(parm.C_1)
     u_i_s = 1.0 / epf.get_r_i(parm.C_2)
 
+    # R_sat
+    r_sat = 1 / u_o_s + 1 / h_v
+
+    p_1 = 1.0 / (1 / r_sat + h_e) + 1.0 / h_v
+
+    p_2 = 1.0 / (r_sat * h_e + 1)
+    
     # 修正U値を計算
-    buf_x = h_v_dash - (h_v ** 2 / (u_o_s + h_v))
-    u_dash = 1.0 / (1.0 / buf_x + 1.0 / h_v + 1.0 / u_i_s)
+    u_dash = 1.0 / (p_1 + 1.0 / u_i_s)
 
     # 修正η値を計算
-    r_l = 1.0 / u_o_s + 1.0 / h_v
-    r_r1 = 1.0 / u_i_s + 1.0 / h_v
-    if parm.v_a > 0.0:
-        r_r2 = 1.0 / epc_s_dash + h_rv / (h_v * h_cv)
-        eta_dash = r_r2 / (r_l * r_r1 + r_l * r_r2 + r_r1 * r_r2) * (parm.a_surf / h_out)
-    else:
-        eta_dash = 1.0 / (r_l + r_r1) * (parm.a_surf / h_out)
+    eta_dash = p_2 * u_dash * parm.a_surf / h_out
 
     # 室内表面熱流を計算
     q_room_side = u_dash * (parm.theta_e - parm.theta_r) + eta_dash * parm.J_surf
