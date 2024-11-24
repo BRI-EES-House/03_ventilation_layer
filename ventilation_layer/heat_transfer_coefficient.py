@@ -246,7 +246,7 @@ def _get_n_u(theta_1: float, theta_2: float, angle: float, l_h: float, l_d: floa
     theta_ave = (theta_1 + theta_2) / 2.0
 
     # レーリー数の計算
-    r_a = (gn.get_g() * gn.get_beta_air(theta_ave) * abs(theta_1 - theta_2) * (l_d ** 3) * (gn.get_rho_air(theta_ave) ** 2) * gn.get_c_air()) / (gn.get_mu_air(theta_ave) * gn.get_lambda_air(theta_ave))
+    r_a = _get_r_a(theta_1, theta_2, l_d)
 
     # ヌセルト数の計算
     nusselt_number = 0
@@ -292,6 +292,13 @@ def _get_n_u(theta_1: float, theta_2: float, angle: float, l_h: float, l_d: floa
         raise ValueError("指定された傾斜角は計算対象外です")
 
     return nusselt_number
+
+def _get_r_a(theta_1, theta_2, l_d):
+
+    # 表面温度の平均値
+    theta_ave = (theta_1 + theta_2) / 2.0
+
+    return (gn.get_g() * gn.get_beta_air(theta_ave) * abs(theta_1 - theta_2) * (l_d ** 3) * (gn.get_rho_air(theta_ave) ** 2) * gn.get_c_air()) / (gn.get_mu_air(theta_ave) * gn.get_lambda_air(theta_ave))
 
 
 def get_h_cv_Jurges(v_a: float) -> float:
