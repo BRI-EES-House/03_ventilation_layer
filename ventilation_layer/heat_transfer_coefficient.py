@@ -273,7 +273,7 @@ def _get_n_u(theta_1: float, theta_2: float, angle: float, l_h: float, l_d: floa
         if buff >= 5830.0:
             nusselt_number = 1.44 * (1.0 - 1708.0/buff) * (1.0 - (1708.0 * (math.sin(1.8 * math.radians(angle)) ** 1.6))/buff) + (buff/5830.0) ** (1/3)
         elif 1708.0 <= buff < 5830.0:
-            nusselt_number = 1.44 * (1.0 - 1708.0/buff) * (1.0 - (1708.0 * (math.sin(1.8 * math.radians(angle)) ** 1.6))/buff)
+            nusselt_number = 1 + 1.44 * (1.0 - 1708.0/buff) * (1.0 - (1708.0 * (math.sin(1.8 * math.radians(angle)) ** 1.6))/buff)
         elif buff < 1708.0:
             nusselt_number = 1.0
         else:
