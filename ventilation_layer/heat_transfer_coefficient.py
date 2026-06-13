@@ -167,7 +167,7 @@ def _get_h_cv_simplified_winter(v_a: float) -> float:
         対流熱伝達率, W/(m2・K)
     """
 
-    return 4.077 * v_a + 2.302
+    return 3.939 * v_a + 3.289
 
 
 def _get_h_cv_simplified_summer(v_a: float) -> float:
@@ -179,7 +179,7 @@ def _get_h_cv_simplified_summer(v_a: float) -> float:
         対流熱伝達率, W/(m2・K)
     """
 
-    return 4.113 * v_a + 1.844
+    return 4.008 * v_a + 3.197
 
 
 def _get_h_cv_simplified_all_season(v_a: float) -> float:

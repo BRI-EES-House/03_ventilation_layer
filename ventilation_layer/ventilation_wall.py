@@ -21,7 +21,7 @@ class WallStatusValues:
 
 
 def _get_heat_balance(
-        matrix_temp: np.zeros(5),
+        matrix_temp: np.ndarray,
         theta_e: float,
         theta_r: float,
         j_surf: float,
@@ -39,17 +39,16 @@ def _get_heat_balance(
         calc_mode_h_rv: str,
         h_out: float,
         h_in: float
-    ) -> np.zeros(5):
-    """
-    熱収支式を解く関数
+    ) -> np.ndarray:
+    """calculate heat balance
 
     Args:
-        matrix_temp: the temperature of the points below, degrees
-            0: the temperature on the exterior surface
-            1: the temperature on the exterior side surface facing the ventilation layer
-            2: the temperature on the interior side surface facing the ventilation layer
-            3: the temperature on the interior surface
-            4: the temperature of the air in the ventilation layer
+        matrix_temp.: temp. of the points below, deg.c
+            0: temp. on the exterior surface
+            1: temp. on the exterior side surface facing the ventilation layer
+            2: temp. on the interior side surface facing the ventilation layer
+            3: temp. on the interior surface
+            4: temp. of the air in the ventilation layer
         theta_e: the outdoor temperature, degrees
         theta_r: the indoor temperature, degrees
         j_surf: the solar irradiance on the exterior surface, W/m2
@@ -68,7 +67,7 @@ def _get_heat_balance(
         h_out: 室外側総合熱伝達率, W/(m2・K)
         h_in: 室内側総合熱伝達率, W/(m2・K)
     Returns:
-        各層の熱収支, W/m2
+        heat balance, W/m2
     """
 
     # SAT temp, degrees
