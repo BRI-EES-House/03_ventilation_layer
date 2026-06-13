@@ -6,7 +6,7 @@ from dataclasses import dataclass
 import ventilation_layer.heat_transfer_coefficient as htc
 import ventilation_layer.ventilation_wall as vw
 import envelope_performance_factors as epf
-from ventilation_layer.global_number import get_c_air, get_rho_air
+from ventilation_layer.global_number import get_c_air, get_rho_air, get_h_out
 
 
 @dataclass
@@ -55,7 +55,7 @@ class Parameters:
     emissivity_2: float
 
 
-def get_vent_wall_performance_factor_by_simplified_calculation_no_03(parm: Parameters, h_out: float):
+def calc(parm: Parameters):
     """
     簡易計算法案No.3：通気層を有する壁体の修正熱貫流率、修正日射熱取得率、室内表面熱流を求める関数
 
@@ -63,6 +63,9 @@ def get_vent_wall_performance_factor_by_simplified_calculation_no_03(parm: Param
     :param h_out:   室外側総合熱伝達率[W/(m2・K)]
     :return:        修正熱貫流率[W/(m2・K)], 修正日射熱取得率[-], 室内表面熱流[W/m2]
     """
+
+    # 室外側熱伝達率, W/(m2 K)
+    h_out = get_h_out()
 
     # 有効放射率の計算
     effective_emissivity = htc.get_e(parm.emissivity_1, parm.emissivity_2)

@@ -1,23 +1,12 @@
 import itertools
 import pandas as pd
 import numpy as np
-from typing import List, Tuple
 
 import ventilation_layer.global_number as global_number
 import ventilation_layer.ventilation_wall as vw
 import ventilation_wall_simplified as vws
 import envelope_performance_factors as epf
 import ventilation_layer.heat_transfer_coefficient as htc
-
-
-class Log:
-    def write(self, msg):
-        """
-        np.seterrのエラーログ記録用の処理（エラー発生時はコンソールにメッセージを出力する）
-        :param msg:　エラーメッセージ
-        :return: なし
-        """
-        print("LOG: %s" % msg)
 
 
 def _get_parameter_data_frame() -> pd.DataFrame:
@@ -231,79 +220,6 @@ def get_wall_status_data_by_detailed_calculation(calc_mode_h_cv: str, calc_mode_
     return df
 
 
-def get_wall_status_data_by_simplified_calculation_no_03() -> pd.DataFrame:
-    """
-    通気層を有する壁体の総当たりパラメータを取得し、簡易計算法案No.3（通気層を有する壁体の修正熱貫流率、修正日射熱取得率から
-    室内表面熱流を求める）による計算結果を保有するDataFrameを作成する
-
-    :param: なし
-    :return: DataFrame
-    """
-
-    # パラメータの総当たりリストを作成する
-    parameter_name = ['theta_e', 'theta_r', 'j_surf', 'a_surf', 'C_1', 'C_2', 'l_h', 'l_w', 'l_d', 'angle',
-                      'v_a', 'l_s', 'emissivity_1', 'emissivity_2']
-    df = _get_parameter_data_frame()
-                      
-    # 固定値の設定
-    h_out = global_number.get_h_out()
-
-    # 計算結果格納用配列を用意
-    theta_sat = []          # 相当外気温度[℃]
-    h_cv = []               # 通気層の対流熱伝達率[W/(m2・K)]
-    h_rv = []               # 通気層の放射熱伝達率[W/(m2・K)]
-    u_dash = []             # 修正熱貫流率[W/(m2・K)]
-    eta_dash = []           # 修正日射熱取得率[-]
-    q_room_side = []        # 室内表面熱流[W/m2]
-
-    # エラーログ出力用の設定
-    log = Log()
-    saved_handler = np.seterrcall(log)
-
-    with np.errstate(all='log'):  # withスコープ内でエラーが出た場合、Logを出力する
-        for row in df.itertuples():
-            print(row[0])
-            # パラメータを設定
-            parms = (vws.Parameters(theta_e=row.theta_e,
-                                   theta_r=row.theta_r,
-                                   J_surf=row.j_surf,
-                                   a_surf=row.a_surf,
-                                   C_1=row.C_1,
-                                   C_2=row.C_2,
-                                   l_h=row.l_h,
-                                   l_w=row.l_w,
-                                   l_d=row.l_d,
-                                   angle=row.angle,
-                                   v_a=row.v_a,
-                                   l_s=row.l_s,
-                                   emissivity_1=row.emissivity_1,
-                                   emissivity_2=row.emissivity_2))
-
-            # 相当外気温度を計算
-            theta_sat.append(epf.get_theta_SAT(row.theta_e, row.a_surf, row.j_surf, h_out))
-
-            # 対流熱伝達率、放射熱伝達率、修正熱貫流率、修正日射熱取得率、室内側表面熱流を計算
-            h_cv_buf, h_rv_buf, u_dash_buf, eta_dash_buf, q_room_side_buf \
-                = vws.get_vent_wall_performance_factor_by_simplified_calculation_no_03(parm=parms, h_out=h_out)
-
-            # 配列に格納
-            h_cv.append(h_cv_buf)
-            h_rv.append(h_rv_buf)
-            u_dash.append(u_dash_buf)
-            eta_dash.append(eta_dash_buf)
-            q_room_side.append(q_room_side_buf)
-
-    # 計算結果をDataFrameに追加
-    df['theta_sat'] = theta_sat
-    df['h_cv'] = h_cv
-    df['h_rv'] = h_rv
-    df['u_dash'] = u_dash
-    df['eta_dash'] = eta_dash
-    df['q_room_side'] = q_room_side
-
-    return df
-
-
 def dump_csv_all_case_result():
     # 総当たりのパラメータと計算結果を取得し、CSVに出力
 
@@ -346,11 +262,6 @@ def dump_csv_all_case_result():
     print("Simplified Calculation: h_cv_all_season")
     df = pd.DataFrame(get_wall_status_data_by_detailed_calculation(calc_mode_h_cv="simplified_all_season", calc_mode_h_rv="detailed"))
     df.to_csv("wall_status_data_frame_h_cv_simplified_all_season.csv")
-
-    # 簡易計算法案No.3（通気層を有する壁体の修正熱貫流率、修正日射熱取得率から室内表面熱流を求める）による計算
-    print("Simplified Calculation No.3")
-    df = pd.DataFrame(get_wall_status_data_by_simplified_calculation_no_03())
-    df.to_csv("wall_status_data_frame_simplified_calculation_no03.csv")
 
 
 if __name__ == '__main__':
