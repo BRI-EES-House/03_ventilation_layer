@@ -1,4 +1,3 @@
-import itertools
 import pandas as pd
 import numpy as np
 
@@ -7,82 +6,7 @@ import ventilation_layer.ventilation_wall as vw
 import ventilation_wall_simplified as vws
 import envelope_performance_factors as epf
 import ventilation_layer.heat_transfer_coefficient as htc
-
-
-def _get_parameter_data_frame() -> pd.DataFrame:
-    """
-    複数のパラメータの総当たりの組み合わせ（直積）のリストを作成する
-    :param なし
-    :return: 総当たりのパラメータリスト
-    """
-
-
-    # the outdoor temperature, degrees
-    # 外気温度は、冬期条件（-10.0～10.0degC）、夏期条件（25.0～35.0degC）を]それぞれ与える
-    # [-10.0, 0.0, 10.0, 25.0, 30.0, 35.0]
-    theta_e = [-10.0, 0.0, 10.0, 25.0, 30.0, 35.0]
-
-    # 上記以外のパラメータには、一部を除いて想定される上下限値と中央値の3点を与える
-
-    # the solar irradiance, W/m2
-    # [0.0, 500.0, 1000.0]
-    j_surf = [0.0, 500.0, 1000.0]
-
-    # the solar absorption ratio, -
-    # [0.0, 0.5, 1.0]
-    a_surf = [0.0, 0.5, 1.0]
-
-    # the thermal conductance of the exterior material, W/m2K
-    # [0.5, 50.25, 100.0]
-    C_1 = [0.5, 50.25, 100.0]
-    
-    # the thermal conductance of the interior material, W/m2K
-    # [0.1, 2.55, 5.0]
-    C_2 = [0.1, 2.55, 5.0]
-    
-    # the length of the ventilation layer, m
-    # [3.0, 7.5, 12.0]
-    l_h = [3.0, 7.5, 12.0]
-    
-    # the width of the ventilation layer, m
-    # [0.05, 5.025, 10.0]
-    l_w = [0.05, 5.025, 10.0]
-
-    # the thickness of the ventilation layer, m
-    # old [0.05, 0.175, 0.3]
-    # changed to [0.005, 0.0175, 0.03] (2023/5/14)
-    l_d = [0.005, 0.0175, 0.03]
-    
-    # the angle of the ventilation layer, degrees
-    # [0.0, 45.0, 90.0]
-    angle = [0.0, 45.0, 90.0]
-
-    # the air vlocity of the ventilation layer, m/s
-    # [0.0, 0.5, 1.0]
-    v_a = [0.0, 0.5, 1.0]
-    
-    # the interval between the furring or the rafter, m
-    # [0.45]
-    l_s = [0.45]
-    
-    # the emissivity of the surface 1 facing the ventilation layer, -
-    # [0.9]
-    emissivity_1 = [0.9]
-
-    # the emissivity of the surface 1 facing the ventilation layer, -
-    # [0.1, 0.5, 0.9]
-    emissivity_2 = [0.1, 0.5, 0.9]
-    
-    parameter_list = list(itertools.product(theta_e, j_surf, a_surf, C_1, C_2, l_h, l_w, l_d, angle, v_a, l_s, emissivity_1, emissivity_2))
-    
-    parameter_name = ['theta_e', 'j_surf', 'a_surf', 'C_1', 'C_2', 'l_h', 'l_w', 'l_d', 'angle', 'v_a', 'l_s', 'emissivity_1', 'emissivity_2']
-
-    df = pd.DataFrame(parameter_list, columns=parameter_name)
-
-    # Give the temperature of 20.0 degrees for winter and 27.0 degrees for summer as the indoor temperature.
-    df['theta_r'] = np.where(df.theta_e > 20.0, 27.0, 20.0)
-
-    return df
+import ventilation_layer.parameters as pm
 
 
 def get_wall_status_data_by_detailed_calculation(calc_mode_h_cv: str, calc_mode_h_rv: str) -> pd.DataFrame:
@@ -95,7 +19,9 @@ def get_wall_status_data_by_detailed_calculation(calc_mode_h_cv: str, calc_mode_
     """
 
     # パラメータの総当たりリストを作成する
-    df = _get_parameter_data_frame()
+    pms = pm.ParametersOptions.SetParameters()
+    df = pms.get_df()
+
 
     # 固定値の設定
     h_out = global_number.get_h_out()
@@ -218,57 +144,3 @@ def get_wall_status_data_by_detailed_calculation(calc_mode_h_cv: str, calc_mode_
         df['optimize_message'] = optimize_message
 
     return df
-
-
-def dump_csv_all_case_result():
-    # 総当たりのパラメータと計算結果を取得し、CSVに出力
-
-    # 詳細計算
-    print("Detailed Calculation")
-    df = pd.DataFrame(get_wall_status_data_by_detailed_calculation("detailed", "detailed"))
-    df.to_csv("wall_status_data_frame_detailed.csv")
-
-    # 放射熱伝達率の検証： 冬期条件の簡易計算
-    print("Simplified Calculation: h_rv_winter")
-    df = pd.DataFrame(get_wall_status_data_by_detailed_calculation(calc_mode_h_cv="detailed", calc_mode_h_rv="simplified_winter"))
-    df.to_csv("wall_status_data_frame_h_rv_simplified_winter.csv")
-
-    # 放射熱伝達率の検証： 夏期条件の簡易計算
-    print("Simplified Calculation: h_rv_summer")
-    df = pd.DataFrame(get_wall_status_data_by_detailed_calculation(calc_mode_h_cv="detailed", calc_mode_h_rv="simplified_summer"))
-    df.to_csv("wall_status_data_frame_h_rv_simplified_summer.csv")
-
-    # 放射熱伝達率の検証： 放射熱伝達率ゼロ
-    print("Simplified Calculation: h_rv_zero")
-    df = pd.DataFrame(get_wall_status_data_by_detailed_calculation(calc_mode_h_cv="detailed", calc_mode_h_rv="simplified_zero"))
-    df.to_csv("wall_status_data_frame_h_rv_simplified_zero.csv")
-
-    # 放射熱伝達率の検証：　通年の簡易計算
-    print("Simplified Calculation: h_rv_all_season")
-    df = pd.DataFrame(get_wall_status_data_by_detailed_calculation(calc_mode_h_cv="detailed", calc_mode_h_rv="simplified_all_season"))
-    df.to_csv("wall_status_data_frame_h_rv_simplified_all_season.csv")
-
-    # 対流熱伝達率の検証： 冬期条件の簡易計算
-    print("Simplified Calculation: h_cv_winter")
-    df = pd.DataFrame(get_wall_status_data_by_detailed_calculation(calc_mode_h_cv="simplified_winter", calc_mode_h_rv="detailed"))
-    df.to_csv("wall_status_data_frame_h_cv_simplified_winter.csv")
-
-    # 対流熱伝達率の検証： 夏期条件の簡易計算
-    print("Simplified Calculation: h_cv_summer")
-    df = pd.DataFrame(get_wall_status_data_by_detailed_calculation(calc_mode_h_cv="simplified_summer", calc_mode_h_rv="detailed"))
-    df.to_csv("wall_status_data_frame_h_cv_simplified_summer.csv")
-
-    # 対流熱伝達率の検証：　通年の簡易計算
-    print("Simplified Calculation: h_cv_all_season")
-    df = pd.DataFrame(get_wall_status_data_by_detailed_calculation(calc_mode_h_cv="simplified_all_season", calc_mode_h_rv="detailed"))
-    df.to_csv("wall_status_data_frame_h_cv_simplified_all_season.csv")
-
-
-if __name__ == '__main__':
-
-    dump_csv_all_case_result()
-
-
-# デバッグ用
-# dump_csv_all_case_result()
-# print(np.median([-20,40]))
