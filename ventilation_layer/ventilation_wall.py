@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 from ventilation_layer import heat_transfer_coefficient as htc
 from ventilation_layer import global_number as gn
+from ventilation_layer.heat_transfer_coefficient import HCVMode, HCVModeDetail, HCVModeSimple, HRVMode, HRVModeDetail, HRVModeSimple
 
 
 @dataclass
@@ -35,8 +36,8 @@ def _get_heat_balance(
         v_a: float,
         eps1: float,
         eps2: float,
-        calc_mode_h_cv: str,
-        calc_mode_h_rv: str,
+        hcv_mode: HCVMode,
+        hrv_mode: HRVMode,
         h_out: float,
         h_in: float
     ) -> np.ndarray:
@@ -62,8 +63,8 @@ def _get_heat_balance(
         v_a: the mean air velocity of the ventilation layer, m/s
         eps1: the emissivity of the surface 1 facing the ventilation layer
         eps2: the emissivity of the surface 2 facing the ventilation layer
-        calc_mode_h_cv: 対流熱伝達率の計算モード
-        calc_mode_h_rv: 放射熱伝達率の計算モード
+        hcv_mode: 対流熱伝達率の計算モード
+        hrv_mode: 放射熱伝達率の計算モード
         h_out: 室外側総合熱伝達率, W/(m2・K)
         h_in: 室内側総合熱伝達率, W/(m2・K)
     Returns:
@@ -79,13 +80,13 @@ def _get_heat_balance(
     theta_4 = matrix_temp[4]
 
     # the convective heat transfer coefficient, W/m2K
-    h_cv = htc.get_h_cv(calc_mode_h_cv, v_a, theta_1, theta_2, angle, l_h, l_d)
+    h_cv = htc.get_h_cv(hcv_mode=hcv_mode, v_a=v_a, theta_1=theta_1, theta_2=theta_2, angle=angle, l_h=l_h, l_d=l_d)
 
     # the effective emissivity, -
     eps_eff = htc.get_e(eps1=eps1, eps2=eps2)
 
     # the radiative heat transfer coefficient, W/m2K
-    h_rv = htc.get_h_rv(eps_eff, calc_mode_h_rv, theta_1, theta_2)
+    h_rv = htc.get_h_rv(hrv_mode=hrv_mode, eps_eff=eps_eff, theta_1=theta_1, theta_2=theta_2)
 
     # the ventilation air volume, m3/s
     v_vent = v_a * l_d * l_w
@@ -136,8 +137,8 @@ def get_wall_status_values(
         v_a: float,
         eps_1: float,
         eps_2: float,
-        calc_mode_h_cv: str,
-        calc_mode_h_rv: str,
+        hcv_mode: str,
+        hrv_mode: str,
         h_out: float,
         h_in: float
     ) -> WallStatusValues:
@@ -157,8 +158,8 @@ def get_wall_status_values(
         v_a: the mean air velocity of the ventilation layer, m/s
         emissivity_1: the emissivity of the surface 1 facing the ventilation layer, -
         emissivity_2: the emissivity of the surface 2 facing the ventilation layer, -
-        calc_mode_h_cv: the calculation mode for the convective heat transfer coefficient
-        calc_mode_h_rv: the calculation mode for the radiative heat transfer coefficient
+        hcv_mode: the calculation mode for the convective heat transfer coefficient
+        hrv_mode: the calculation mode for the radiative heat transfer coefficient
         h_out: the overall heat transfer coefficient of the inside, W/m2K
         h_in: the overall heat transfer coefficient of the outside, W/m2K
     Returns:
@@ -168,7 +169,7 @@ def get_wall_status_values(
 
     if index % 10000 == 0:
         print(index)
-
+    
     # the initial temperature of the points in the ventilation layer
     t0 = theta_e
     t1 = theta_e + (theta_r - theta_e) * 1 / 4
@@ -183,7 +184,7 @@ def get_wall_status_values(
             matrix_temp=matrix_temp, theta_e=theta_e, theta_r=theta_r, j_surf=j_surf, a_surf=a_surf,
             c_1=c_1, c_2=c_2, l_h=l_h, l_w=l_w, l_d=l_d,
             angle=angle, v_a=v_a, eps1=eps_1, eps2=eps_2,
-            calc_mode_h_cv=calc_mode_h_cv, calc_mode_h_rv=calc_mode_h_rv, h_out=h_out, h_in=h_in)
+            hcv_mode=hcv_mode, hrv_mode=hrv_mode, h_out=h_out, h_in=h_in)
 
 
     # 通気層内の各層の熱収支式の最適解を収束計算で求める

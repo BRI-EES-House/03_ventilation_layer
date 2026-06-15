@@ -5,9 +5,10 @@ from dataclasses import dataclass
 
 import ventilation_layer.heat_transfer_coefficient as htc
 import ventilation_layer.ventilation_wall as vw
-import envelope_performance_factors as epf
+import ventilation_layer.envelope_performance_factors as epf
 from ventilation_layer.global_number import get_c_air, get_rho_air, get_h_out
 import ventilation_layer.parameters as pm
+from ventilation_layer.heat_transfer_coefficient import HCVMode, HCVModeDetail, HCVModeSimple, HRVMode, HRVModeDetail, HRVModeSimple
 
 
 def calc(parm: pm.Parameters):
@@ -27,11 +28,11 @@ def calc(parm: pm.Parameters):
 
     # 対流熱伝達率、放射熱伝達率の計算
     if parm.theta_r == 20.0:
-        h_cv = htc.get_h_cv(calc_mode="simplified_winter", v_a=parm.v_a)
-        h_rv = htc.get_h_rv(calc_mode="simplified_winter", eps_eff=effective_emissivity)
+        h_cv = htc.get_h_cv(hcv_mode=HCVModeSimple(a=3.939, b=3.289), v_a=parm.v_a)
+        h_rv = htc.get_h_rv(hrv_mode=HRVModeSimple(a=5.054), eps_eff=effective_emissivity)
     else:
-        h_cv = htc.get_h_cv(calc_mode="simplified_winter", v_a=parm.v_a)
-        h_rv = htc.get_h_rv(calc_mode="simplified_winter", eps_eff=effective_emissivity)
+        h_cv = htc.get_h_cv(hcv_mode=HCVModeSimple(a=4.008, b=3.197), v_a=parm.v_a)
+        h_rv = htc.get_h_rv(hrv_mode=HRVModeSimple(a=6.615), eps_eff=effective_emissivity)
 
     # 熱伝達率の計算
     h_v = 2.0 * h_rv + h_cv

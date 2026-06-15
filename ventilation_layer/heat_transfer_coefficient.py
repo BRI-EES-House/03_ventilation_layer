@@ -1,7 +1,35 @@
 import math
 from typing import Optional
+from dataclasses import dataclass
+from abc import ABC
 
 from ventilation_layer import global_number as gn
+
+
+@dataclass
+class HCVMode(ABC):
+    pass
+
+@dataclass
+class HCVModeDetail(HCVMode):
+    pass
+
+@dataclass
+class HCVModeSimple(HCVMode):
+    a: float
+    b: float
+
+@dataclass
+class HRVMode(ABC):
+    pass
+
+@dataclass
+class HRVModeDetail(HRVMode):
+    pass
+
+@dataclass
+class HRVModeSimple(HRVMode):
+    a: float
 
 
 def get_e(eps1: float, eps2: float, l_d: Optional[float] = None, l_s: Optional[float] = None, method: Optional[str] = "parallel") -> float:
@@ -42,36 +70,30 @@ def _get_e_two_dimension(eps1: float, eps2: float, l_d: float, l_s: float) -> fl
     return 1.0 / (1.0 / eps1 + 1.0 / eps2 - 2.0 + 1.0 / (1.0 / 2.0 * (1.0 + math.sqrt(1.0 + l_d**2.0 / l_s**2.0) - l_d / l_s)))
 
 
-def get_h_rv(eps_eff: float, calc_mode: Optional[str] = "detailed", theta_1: Optional[float] = None, theta_2: Optional[float] = None) -> float:
+def get_h_rv(hrv_mode: HRVMode, eps_eff: float, theta_1: Optional[float] = None, theta_2: Optional[float] = None) -> float:
     """計算モードに応じた放射熱伝達率を計算する
 
     Args:
-        calc_mode: 計算モード
+        hrv_mode: 計算モード
+        eps_eff: 有効放射率, -
         theta_1: 通気層に面する面1の表面温度, degrees
         theta_2: 通気層に面する面2の表面温度, degrees
-        eps_eff: 有効放射率, -
     Returns:
         放射熱伝達率, W/(m2・K)
     """
 
-    if calc_mode == "detailed":
+    if isinstance(hrv_mode, HRVModeDetail):
         h_rv = _get_h_rv_detailed(theta_1, theta_2, eps_eff)
-    elif calc_mode == "simplified_winter":
-        h_rv = _get_h_rv_simplified_winter(eps_eff)
-    elif calc_mode == "simplified_summer":
-        h_rv = _get_h_rv_simplified_summer(eps_eff)
-    elif calc_mode == "simplified_all_season":
-        h_rv = _get_h_rv_simplified_all_season(eps_eff)
-    elif calc_mode == "simplified_zero":
-        h_rv = 0.0
+    elif isinstance(hrv_mode, HRVModeSimple):
+        h_rv = _get_h_rv_simplified(eps_eff=eps_eff, a=hrv_mode.a)
     else:
         raise ValueError("指定された計算モードは対象外です")
 
     return h_rv
 
 
-def _get_h_rv_simplified_winter(eps_eff: float) -> float:
-    """放射熱伝達率[W/(m2・K)]の計算（簡易計算、冬期条件）
+def _get_h_rv_simplified(eps_eff: float, a: float) -> float:
+    """放射熱伝達率[W/(m2・K)]の計算（簡易計算）
 
     Args:
         effective_emissivity: 有効放射率, -
@@ -79,31 +101,7 @@ def _get_h_rv_simplified_winter(eps_eff: float) -> float:
         放射熱伝達率, W/(m2・K)
     """
 
-    return 5.054 * eps_eff
-
-
-def _get_h_rv_simplified_summer(eps_eff: float) -> float:
-    """放射熱伝達率[W/(m2・K)]の計算（簡易計算、夏期条件）
-
-    Args:
-        eps_eff: 有効放射率, -
-    Returns:
-        放射熱伝達率, W/(m2・K)
-    """
-
-    return 6.615 * eps_eff
-
-
-def _get_h_rv_simplified_all_season(eps_eff: float) -> float:
-    """放射熱伝達率[W/(m2・K)]の計算（簡易計算、通年）
-
-    Args:
-        eps_eff: 有効放射率, -
-    Returns:
-        放射熱伝達率, W/(m2・K)
-    """
-
-    return 5.88 * eps_eff
+    return a * eps_eff
 
 
 def _get_h_rv_detailed(theta_1: float, theta_2: float, eps_eff: float) -> float:
@@ -125,7 +123,7 @@ def _get_h_rv_detailed(theta_1: float, theta_2: float, eps_eff: float) -> float:
 
 
 def get_h_cv(
-        calc_mode: str,
+        hcv_mode: HCVMode,
         v_a: float,
         theta_1: Optional[float] = None,
         theta_2: Optional[float] = None,
@@ -136,30 +134,27 @@ def get_h_cv(
     """計算モードに応じた対流熱伝達率を計算する
 
     Args:
-        calc_mode: 計算モード
+        hcv_mode: 計算モード
         v_a: 通気層の平均風速, m/s
-        theta_1: 通気層に面する面1の表面温度, degrees
-        theta_2: 通気層に面する面2の表面温度, degrees
-        angle: 通気層の傾斜角, degrees
+        theta_1: 通気層に面する面1の表面温度, deg.C
+        theta_2: 通気層に面する面2の表面温度, deg.C
+        angle: 通気層の傾斜角, deg.
         l_h: 通気層の長さ, m
         l_d: 通気層の厚さ, m
     Returns:
         対流熱伝達率, W/(m2・K)
     """
-    if calc_mode == "detailed":
+
+    if isinstance(hcv_mode, HCVModeDetail):
         return _get_h_cv_detailed(v_a, theta_1, theta_2, angle, l_h, l_d)
-    elif calc_mode == "simplified_winter":
-        return _get_h_cv_simplified_winter(v_a)
-    elif calc_mode == "simplified_summer":
-        return _get_h_cv_simplified_summer(v_a)
-    elif calc_mode == "simplified_all_season":
-        return _get_h_cv_simplified_all_season(v_a)
+    elif isinstance(hcv_mode, HCVModeSimple):
+        return _get_h_cv_simplified(v_a=v_a, a=hcv_mode.a, b=hcv_mode.b)
     else:
         raise ValueError("指定された計算モードは対象外です")
 
 
-def _get_h_cv_simplified_winter(v_a: float) -> float:
-    """対流熱伝達率[W/(m2・K)]の計算（簡易計算、冬期条件）
+def _get_h_cv_simplified(v_a: float, a: float, b: float) -> float:
+    """対流熱伝達率[W/(m2・K)]の計算（簡易計算）
 
     Args:
         v_a: 通気層の平均風速, m/s
@@ -167,31 +162,7 @@ def _get_h_cv_simplified_winter(v_a: float) -> float:
         対流熱伝達率, W/(m2・K)
     """
 
-    return 3.939 * v_a + 3.289
-
-
-def _get_h_cv_simplified_summer(v_a: float) -> float:
-    """対流熱伝達率[W/(m2・K)]の計算（簡易計算、夏期条件）
-
-    Args:
-        v_a: 通気層の平均風速, m/s
-    Returns:
-        対流熱伝達率, W/(m2・K)
-    """
-
-    return 4.008 * v_a + 3.197
-
-
-def _get_h_cv_simplified_all_season(v_a: float) -> float:
-    """対流熱伝達率[W/(m2・K)]の計算（簡易計算、通年）
-
-    Args:
-        v_a: 通気層の平均風速, m/s
-    Returns:
-        対流熱伝達率, W/(m2・K)
-    """
-
-    return 4.096 * v_a + 2.06
+    return a * v_a + b
 
 
 def _get_h_cv_detailed(v_a: float, theta_1: float, theta_2: float, angle: float, l_h: float, l_d: float) -> float:
@@ -292,6 +263,7 @@ def _get_n_u(theta_1: float, theta_2: float, angle: float, l_h: float, l_d: floa
         raise ValueError("指定された傾斜角は計算対象外です")
 
     return nusselt_number
+
 
 def _get_r_a(theta_1, theta_2, l_d):
 
